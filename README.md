@@ -16,7 +16,9 @@ rustup target add wasm32-unknown-unknown
 
 ## Running the Server
 
-TODO
+```bash
+cargo run
+```
 
 ## Running the Client
 
