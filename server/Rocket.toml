@@ -1,0 +1,2 @@
+[default.databases.mongodb_main]
+url = "mongodb://localhost:27017"
