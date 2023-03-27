@@ -1,4 +1,6 @@
 use yew::prelude::*;
+mod connect4;
+use connect4::Game;
 use yew_router::history::{AnyHistory, History, MemoryHistory};
 use yew_router::prelude::*;
 
@@ -28,14 +30,13 @@ pub enum Route {
 
 #[function_component]
 fn App() -> Html {
-
     html! {
-        <BrowserRouter>
+           <BrowserRouter>
             <Navbar />
 
             <main>
                 <Switch<Route> render={switch} />
-            </main>
+           </main>
         </BrowserRouter>
     }
 }
@@ -53,6 +54,7 @@ fn switch(routes: Route) -> Html {
         // }
         Route::Login => {
             html! { <LoginForm /> }
+           <Game player1={"Player 1".to_string()} player2={"Player 2".to_string()} game_type={"Connect 4".to_string()} num_rows={100} num_cols={100} />
         }
         Route::Register => {
             html! { <RegisterForm /> }
