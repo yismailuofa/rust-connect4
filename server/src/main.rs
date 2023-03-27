@@ -1,10 +1,12 @@
+use std::collections::HashMap;
+
 use argon2::{hash_encoded, verify_encoded};
 use rocket::{futures::TryStreamExt, http::Status, serde::json::Json};
 use rocket_db_pools::{
     mongodb::{self, bson::doc, Collection},
     Connection, Database,
 };
-use server::{ConnectGame, User};
+use server::{ConnectGame, Leaderboard, User};
 
 #[macro_use]
 extern crate rocket;
@@ -29,22 +31,20 @@ async fn create_game(db: Connection<Db>, game: Json<ConnectGame>) -> Result<(), 
 async fn all_games(db: Connection<Db>) -> Result<Json<Vec<ConnectGame>>, Status> {
     let collection: Collection<ConnectGame> = db.database("mongodb_main").collection("games");
 
-    let result = collection.find(None, None).await;
+    let cursor = collection
+        .find(None, None)
+        .await
+        .map_err(|_| Status::InternalServerError)?;
 
-    match result {
-        Ok(cursor) => {
-            let games = cursor.try_collect::<Vec<ConnectGame>>().await;
+    let games = cursor
+        .try_collect()
+        .await
+        .map_err(|_| Status::InternalServerError)?;
 
-            match games {
-                Ok(games) => Ok(Json(games)),
-                Err(_) => Err(Status::InternalServerError),
-            }
-        }
-        Err(_) => Err(Status::InternalServerError),
-    }
+    Ok(Json(games))
 }
 
-#[get("/", data = "<user_payload>")]
+#[get("/login", data = "<user_payload>")]
 async fn login(db: Connection<Db>, user_payload: Json<User>) -> Result<(), Status> {
     let collection: Collection<User> = db.database("mongodb_main").collection("users");
 
@@ -65,7 +65,7 @@ async fn login(db: Connection<Db>, user_payload: Json<User>) -> Result<(), Statu
     }
 }
 
-#[post("/", data = "<user_payload>")]
+#[post("/register", data = "<user_payload>")]
 async fn register(db: Connection<Db>, user_payload: Json<User>) -> Result<(), Status> {
     let collection: Collection<User> = db.database("mongodb_main").collection("users");
 
@@ -99,11 +99,62 @@ async fn register(db: Connection<Db>, user_payload: Json<User>) -> Result<(), St
     }
 }
 
+#[get("/")]
+async fn leaderboard(db: Connection<Db>) -> Result<Json<Vec<Leaderboard>>, Status> {
+    // Returns the top users grouped by their games
+    let collection: Collection<ConnectGame> = db.database("mongodb_main").collection("games");
+
+    let mut cursor = collection
+        .find(None, None)
+        .await
+        .map_err(|_| Status::InternalServerError)?;
+
+    let mut leaderboard = HashMap::new();
+
+    while let Some(game) = cursor
+        .try_next()
+        .await
+        .map_err(|_| Status::InternalServerError)?
+    {
+        let loser = if game.player1 == game.winner {
+            game.player2
+        } else {
+            game.player1
+        };
+
+        let mut entry = Leaderboard {
+            username: game.winner.clone(),
+            wins: 0,
+            losses: 0,
+        };
+
+        let winner = leaderboard.entry(game.winner).or_insert(entry);
+
+        winner.wins += 1;
+
+        entry = Leaderboard {
+            username: loser.clone(),
+            wins: 0,
+            losses: 0,
+        };
+
+        let loser = leaderboard.entry(loser).or_insert(entry);
+
+        loser.losses += 1;
+    }
+
+    let mut leaderboard: Vec<Leaderboard> = leaderboard.into_iter().map(|(_, v)| v).collect();
+
+    leaderboard.sort_by(|a, b| b.wins.cmp(&a.wins));
+
+    Ok(Json(leaderboard))
+}
+
 #[launch]
 fn rocket() -> _ {
     rocket::build()
         .attach(Db::init())
-        .mount("/game", routes![all_games, create_game])
-        .mount("/login", routes![login])
-        .mount("/register", routes![register])
+        .mount("/games", routes![create_game, all_games])
+        .mount("/users", routes![login, register])
+        .mount("/leaderboard", routes![leaderboard])
 }

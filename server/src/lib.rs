@@ -23,3 +23,11 @@ pub struct User {
     pub username: String,
     pub password: String,
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(crate = "rocket::serde")]
+pub struct Leaderboard {
+    pub username: String,
+    pub wins: u32,
+    pub losses: u32,
+}
