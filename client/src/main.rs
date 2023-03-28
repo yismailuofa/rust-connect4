@@ -15,22 +15,21 @@ pub enum Route {
     TootOtto,
     #[at("/leaderboard")]
     Leaderboard,
-    #[at("/user/login")]
+    #[at("/login")]
     Login,
-    #[at("/user/register")]
+    #[at("/register")]
     Register,
     #[at("/")]
     Home,
-    // #[not_found]
-    // #[at("/404")]
-    // NotFound,
+    #[not_found]
+    #[at("/404")]
+    NotFound,
 }
 
 #[function_component]
 fn App() -> Html {
     html! {
-            
-           <BrowserRouter>
+        <BrowserRouter>
             <Navbar />
 
             <main>
@@ -49,22 +48,19 @@ fn switch(routes: Route) -> Html {
         Route::TootOtto => {
             html! { <TootOtto /> }
         }
-        // Route::Leaderboard => {
-        //     html! { <Leaderboard /> }
-        // }
+        Route::Leaderboard => todo!(),
         Route::Login => {
             html! { <LoginForm /> }
         }
         Route::Register => {
             html! { <RegisterForm /> }
         }
-        _ => todo!(),
-        // Route::Home => {
-        //     html! { <Home /> }
-        // }
-        // Route::NotFound => {
-        //     html! { <PageNotFound /> }
-        // }
+        Route::Home => {
+            html! { "Home" }
+        }
+        Route::NotFound => {
+            html! { "Page not found." }
+        }
     }
 }
 
