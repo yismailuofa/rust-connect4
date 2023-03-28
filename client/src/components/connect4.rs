@@ -33,7 +33,6 @@ pub struct Props {
 impl Game {
     fn alpha_beta_minmax(&mut self, player:bool, depth: i32, mut alpha: i32, mut beta: i32) -> (i32, usize) {
         // make next_player an empty hashmap
-        let max_player = true;
         let sequences = match self.game_type.as_str() {
             "connect4" => if player {vec!["RRRR"]} else {vec!["YYYY"]},
             "otto" => vec!["OTTO", "TOOT"],
@@ -41,7 +40,7 @@ impl Game {
         };
             
         if is_win(&self.board, sequences) {
-            if player == max_player {
+            if player {
                 return (-1, 0);
             } else {
                 return (1, 0);
@@ -50,7 +49,7 @@ impl Game {
         else if self.is_draw() || depth == 0 {
             return (0, 0);
         }
-        let mut best_score = if max_player == player {i32::MIN} else {i32::MAX};
+        let mut best_score = if player {i32::MIN} else {i32::MAX};
         let mut best_move = 0;
 
         for m in self.get_valid_moves() {
@@ -59,7 +58,7 @@ impl Game {
 
             let score = self.alpha_beta_minmax(!player, depth - 1, alpha, beta).0;
             
-            if max_player == player {
+            if player {
                 if score > best_score {
                     best_score = score;
                     best_move = m;
@@ -353,9 +352,9 @@ impl Component for Game {
                             'T'|'O' => html! { <div class="circle bounce" style="background-color: #FFFFFF;">{item}</div> },
                             _ => html! { <div class="circle"></div> },
                         }
-                    }) }
-
-                
+                    
+                    }) 
+                    }
                 </button>
             });
         }
