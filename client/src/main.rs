@@ -10,7 +10,7 @@ fn App() -> Html {
     html! {
            <div>
            <LoginForm/>
-           <Game player1={"Player 1".to_string()} player2={"Player 2".to_string()} game_type={"Connect 4".to_string()} num_rows={100} num_cols={100} />
+           <Game player1={"Player 1".to_string()} player2={"Player 2".to_string()} game_type={"otto".to_string()} num_rows={6} num_cols={7} />
         </div>
     }
 }
