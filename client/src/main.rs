@@ -34,7 +34,12 @@ pub enum LoginRoute {
 
 #[function_component]
 fn App() -> Html {
-    let user = use_state(|| Option::<User>::None);
+    let user = use_state(|| {
+        Option::<User>::Some(User {
+            username: "".to_string(),
+            password: "".to_string(),
+        })
+    });
 
     html! {
         <BrowserRouter>
