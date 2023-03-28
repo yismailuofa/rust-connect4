@@ -6,6 +6,7 @@ use crate::components::connect4::{Connect4, TootOtto};
 use crate::components::login_form::LoginForm;
 use crate::components::navbar::Navbar;
 use crate::components::register_form::RegisterForm;
+use crate::components::leaderboard::LeaderBoard;
 use client::User;
 
 #[derive(Routable, PartialEq, Eq, Clone, Debug)]
@@ -77,7 +78,12 @@ fn switch_main(routes: MainRoute) -> Html {
                     </div>
                 }
         }
-        MainRoute::Leaderboard => todo!(),
+        MainRoute::Leaderboard => {
+            html! { <div class="game-container">
+                        <LeaderBoard />
+                    </div>
+                }
+        },
         MainRoute::NotFound => {
             html! { "Page not found." }
         }
