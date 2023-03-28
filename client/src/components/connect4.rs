@@ -1,3 +1,4 @@
+use log::info;
 use yew::*;
 
 pub struct Game {
@@ -9,6 +10,7 @@ pub struct Game {
     num_rows: i32,
     num_cols: i32,
     done: bool,
+    //grid: 
 }
 
 pub enum Msg {
@@ -21,6 +23,40 @@ pub struct Props {
     pub game_type: String,
     pub num_rows: i32,
     pub num_cols: i32,
+}
+
+fn get_diagonal_strings(matrix: &[Vec<char>]) -> Vec<String> {
+    let rows = matrix.len();
+    let cols = matrix[0].len();
+
+    // Define a closure to extract diagonals given a starting point (r, c) and step values.
+    let extract_diag = |r: isize, c: isize, step_r: isize, step_c: isize| -> String {
+        (0..)
+            .map(move |i| {
+                let row = r + i * step_r;
+                let col = c + i * step_c;
+                (row, col)
+            })
+            .take_while(|&(row, col)| row >= 0 && row < rows as isize && col >= 0 && col < cols as isize)
+            .map(|(row, col)| matrix[row as usize][col as usize])
+            .collect()
+    };
+
+    let mut diagonals = vec![];
+
+    // Extract primary diagonals starting from each element of the top row (going down-right).
+    diagonals.extend((0..cols).map(|col| extract_diag(0, col as isize, 1, 1)));
+
+    // Extract primary diagonals starting from each element of the left column (going down-right), excluding top-left corner.
+    diagonals.extend((1..rows).map(|row| extract_diag(row as isize, 0, 1, 1)));
+
+    // Extract secondary diagonals starting from each element of the top row (going down-left).
+    diagonals.extend((0..cols).map(|col| extract_diag(0, col as isize, 1, -1)));
+
+    // Extract secondary diagonals starting from each element of the right column (going down-left), excluding top-right corner.
+    diagonals.extend((1..rows).map(|row| extract_diag(row as isize, cols as isize - 1, 1, -1)));
+
+    diagonals
 }
 
 fn is_win(board: &Vec<Vec<char>>, sequences: Vec<&str>) -> bool {
@@ -46,16 +82,16 @@ fn is_win(board: &Vec<Vec<char>>, sequences: Vec<&str>) -> bool {
         }
     }
 
-    // Check diagonals for a winning sequence
-    let diag1: String = (0..n).map(|i| board[i][i]).collect();
-    let diag2: String = (0..n).map(|i| board[i][n - 1 - i]).collect();
-
-    for sequence in sequences {
-        if diag1.contains(&sequence) || diag2.contains(&sequence) {
-            return true;
+    // Check all possible diagonals for a winning sequence
+    let diagonals = get_diagonal_strings(&board);
+    info!("Diagonals: {:?}", diagonals);
+    for diagonal in diagonals {
+        for sequence in sequences.clone() {
+            if diagonal.contains(&sequence) {
+                return true;
+            }
         }
     }
-
     // No winning sequence found
     false
 }
@@ -64,6 +100,7 @@ impl Component for Game {
     type Message = Msg;
     type Properties = Props;
     fn create(_ctx: &Context<Self>) -> Self {
+        _ctx.link().send_message(Msg::Move { col: 0 });
         let props = _ctx.props().clone();
         Self {
             //link,
