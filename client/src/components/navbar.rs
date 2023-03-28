@@ -18,6 +18,9 @@ pub fn Navbar() -> Html {
                     <Link<MainRoute> classes={classes!("navbar-item")} to={MainRoute::Leaderboard}>
                         { "Leaderboard" }
                     </Link<MainRoute>>
+                    <Link<MainRoute> classes={classes!("navbar-item")} to={MainRoute::Logout}>
+                        { "Logout" }
+                    </Link<MainRoute>>
                 </div>
             </div>
         </nav>
