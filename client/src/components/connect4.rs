@@ -263,18 +263,6 @@ impl Component for Game {
     fn view(&self, ctx: &Context<Self>) -> Html {
         let link = ctx.link();
         let mut board = vec![];
-        // for i in 0..self.num_rows {
-        //     let mut row = vec![];
-        //     for j in 0..self.num_cols {
-        //         let onclick = link.callback(move |_| Msg::Move { col: j });
-        //         row.push(html! {
-        //             <button onclick={onclick}>{ self.board[i as usize][j as usize] }</button>
-        //         });
-        //     }
-        //     board.push(html! {
-        //         <div>{ row }</div>
-        //     });
-        // }
         for i in 0..self.num_cols {
             let onclick = link.callback(move |_| Msg::Move { col: i as usize });
             let col: Vec<char> = self.board.iter().map(|row| row[i as usize]).collect();
@@ -296,7 +284,13 @@ impl Component for Game {
         }
         html! {
             <div class="game-container">
-                <h1 class="title">{ "Connect 4" }</h1>
+                <h1 class="title">{ 
+                    if self.game_type == "connect4" {
+                        "Connect 4"
+                    } else {
+                        "Toot & Otto"
+                    }
+                }</h1>
                 <div class="grid">{ board }</div>
             </div>
         }
