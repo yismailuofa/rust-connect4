@@ -164,7 +164,7 @@ fn is_win(board: &Vec<Vec<char>>, sequences: Vec<&str>) -> bool {
     }
 
     // Check columns for a winning sequence
-    let n = board.len();
+    let n = board[0].len();
     for col_idx in 0..n {
         let col_str: String = board.iter().map(|row| row[col_idx]).collect();
         for sequence in sequences.clone() {
@@ -326,18 +326,6 @@ impl Component for Game {
     fn view(&self, ctx: &Context<Self>) -> Html {
         let link = ctx.link();
         let mut board = vec![];
-        // for i in 0..self.num_rows {
-        //     let mut row = vec![];
-        //     for j in 0..self.num_cols {
-        //         let onclick = link.callback(move |_| Msg::Move { col: j });
-        //         row.push(html! {
-        //             <button onclick={onclick}>{ self.board[i as usize][j as usize] }</button>
-        //         });
-        //     }
-        //     board.push(html! {
-        //         <div>{ row }</div>
-        //     });
-        // }
         for i in 0..self.num_cols {
             let onclick = link.callback(move |_| Msg::UserMove { col: i as usize });
             let col: Vec<char> = self.board.iter().map(|row| row[i as usize]).collect();
@@ -385,7 +373,7 @@ impl Component for Game {
 #[function_component]
 pub fn Connect4() -> Html {
     html! {
-        <Game player1={"Muneer".to_string()} player2={"Ismail".to_string()} game_type={"connect4".to_string()} num_rows={6} num_cols={6} />
+        <Game player1={"Muneer".to_string()} player2={"Ismail".to_string()} game_type={"connect4".to_string()} num_rows={8} num_cols={6} />
     }
 }
 #[function_component]
