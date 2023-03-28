@@ -13,10 +13,13 @@ pub fn Navbar() -> Html {
                         { "Connect 4" }
                     </Link<MainRoute>>
                     <Link<MainRoute> classes={classes!("navbar-item")} to={MainRoute::TootOtto}>
-                        { "TOOT-OTTO" }
+                        { "Toot & Otto" }
                     </Link<MainRoute>>
                     <Link<MainRoute> classes={classes!("navbar-item")} to={MainRoute::Leaderboard}>
                         { "Leaderboard" }
+                    </Link<MainRoute>>
+                    <Link<MainRoute> classes={classes!("navbar-item")} to={MainRoute::Logout}>
+                        { "Logout" }
                     </Link<MainRoute>>
                 </div>
             </div>

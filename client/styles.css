@@ -68,7 +68,7 @@ body {
   border-radius: 50%;
   position: absolute;
   top: -80px;
-  left: 5px;
+  left: 10px;
   transition: all 200ms;
 }
 
@@ -171,7 +171,13 @@ body {
 
 .title {
   text-align: center;
-  font-size: 1.5rem;
+  font-size: 1.6rem;
+  font-weight: 400;
+}
+
+.subtitle {
+  text-align: center;
+  font-size: 1.2rem;
   font-weight: 300;
   padding-bottom: 60px;
 }

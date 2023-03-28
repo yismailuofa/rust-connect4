@@ -345,15 +345,30 @@ impl Component for Game {
                 </button>
             });
         }
+        let subtitle = if self.done {
+            if self.turn {
+                format!("{} wins!", self.player2)
+            } else {
+                format!("{} wins!", self.player1)
+            }
+        } else {
+            if self.turn {
+                format!("{}'s turn", self.player1)
+            } else {
+                format!("{}'s turn", self.player2)
+            }
+        };
+
+        let title = if self.game_type == "connect4" {
+            "Connect 4"
+        } else {
+            "Toot & Otto"
+        };
+
         html! {
             <div class="game-container">
-                <h1 class="title">{ 
-                    if self.game_type == "connect4" {
-                        "Connect 4"
-                    } else {
-                        "Toot & Otto"
-                    }
-                }</h1>
+                <h1 class="title">{ title }</h1>
+                <h2 class="subtitle">{ subtitle }</h2>
                 <div class="grid">{ board }</div>
             </div>
         }

@@ -17,6 +17,8 @@ pub enum MainRoute {
     TootOtto,
     #[at("/leaderboard")]
     Leaderboard,
+    #[at("/logout")]
+    Logout,
     #[not_found]
     #[at("/404")]
     NotFound,
@@ -68,15 +70,15 @@ fn switch_main(routes: MainRoute) -> Html {
     match routes {
         MainRoute::Connect4 => {
             html! { <div class="game-container">
-                        <Connect4 />
-                        </div>
-                    }
+                <Connect4 />
+                </div>
+            }
         }
         MainRoute::TootOtto => {
             html! { <div class="game-container">
-                        <TootOtto />
-                    </div>
-                }
+                    <TootOtto />
+                </div>
+            }
         }
         MainRoute::Leaderboard => {
             html! { <div class="game-container">
@@ -87,6 +89,7 @@ fn switch_main(routes: MainRoute) -> Html {
         MainRoute::NotFound => {
             html! { "Page not found." }
         }
+        MainRoute::Logout => todo!(),
     }
 }
 
