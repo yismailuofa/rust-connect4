@@ -10,12 +10,13 @@ pub struct Game {
     num_rows: i32,
     num_cols: i32,
     done: bool,
-    //grid: 
+    //grid:
 }
 
 pub enum Msg {
     Move { col: i32 },
 }
+
 #[derive(Properties, PartialEq)]
 pub struct Props {
     pub player1: String,
@@ -37,7 +38,9 @@ fn get_diagonal_strings(matrix: &[Vec<char>]) -> Vec<String> {
                 let col = c + i * step_c;
                 (row, col)
             })
-            .take_while(|&(row, col)| row >= 0 && row < rows as isize && col >= 0 && col < cols as isize)
+            .take_while(|&(row, col)| {
+                row >= 0 && row < rows as isize && col >= 0 && col < cols as isize
+            })
             .map(|(row, col)| matrix[row as usize][col as usize])
             .collect()
     };
