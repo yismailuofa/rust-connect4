@@ -103,7 +103,7 @@ impl Component for Game {
     type Message = Msg;
     type Properties = Props;
     fn create(_ctx: &Context<Self>) -> Self {
-        _ctx.link().send_message(Msg::Move { col: 0 });
+        
         let props = _ctx.props().clone();
         Self {
             //link,
@@ -121,6 +121,7 @@ impl Component for Game {
         }
     }
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
+
         match msg {
             Msg::Move { col } => {
                 let mut row = 0;
@@ -180,16 +181,35 @@ impl Component for Game {
     fn view(&self, ctx: &Context<Self>) -> Html {
         let link = ctx.link();
         let mut board = vec![];
-        for i in 0..self.num_rows {
-            let mut row = vec![];
-            for j in 0..self.num_cols {
-                let onclick = link.callback(move |_| Msg::Move { col: j });
-                row.push(html! {
-                    <button onclick={onclick}>{ self.board[i as usize][j as usize] }</button>
-                });
-            }
+        // for i in 0..self.num_rows {
+        //     let mut row = vec![];
+        //     for j in 0..self.num_cols {
+        //         let onclick = link.callback(move |_| Msg::Move { col: j });
+        //         row.push(html! {
+        //             <button onclick={onclick}>{ self.board[i as usize][j as usize] }</button>
+        //         });
+        //     }
+        //     board.push(html! {
+        //         <div>{ row }</div>
+        //     });
+        // }
+        for i in 0..self.num_cols {
+            let onclick = link.callback(move |_| Msg::Move { col: i });
+            let col: Vec<char> = self.board.iter().map(|row| row[i as usize]).collect();
             board.push(html! {
-                <div>{ row }</div>
+                <button onclick={onclick}>
+                
+                    { for col.iter().map(|item| html! { 
+                        match item {
+                            'R' => html! { <div class="circle" style="background-color: #ED5A8B;"></div> },
+                            'Y' => html! { <div class="circle" style="background-color: #6F8FEA;text-align: center;"></div> },
+                            'T'|'O' => html! { <div class="circle" style="background-color: #FFFFFF;">{item}</div> },
+                            _ => html! { <div class="circle"></div> },
+                        }
+                    }) }
+
+                
+                </button>
             });
         }
         html! {
