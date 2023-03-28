@@ -1,8 +1,8 @@
 use std::i32::{MIN, MAX};
 
 use gloo_timers::callback::Timeout;
-use log::info;
 use yew::*;
+use gloo_console::log;
 
 pub struct Game {
     board: Vec<Vec<char>>,
@@ -35,16 +35,16 @@ impl Game {
         // make next_player an empty hashmap
         let max_player = true;
         let sequences = match self.game_type.as_str() {
-            "connect4" => if player {vec!["RRRR"]} else {vec!["OOOO"]},
+            "connect4" => if player {vec!["RRRR"]} else {vec!["YYYY"]},
             "otto" => vec!["OTTO", "TOOT"],
             _ => vec!["XXXX"],
         };
             
         if is_win(&self.board, sequences) {
-            if player {
-                return (1, 0);
-            } else {
+            if player == max_player {
                 return (-1, 0);
+            } else {
+                return (1, 0);
             }
         }
         else if self.is_draw() || depth == 0 {
@@ -52,9 +52,11 @@ impl Game {
         }
         let mut best_score = if max_player == player {i32::MIN} else {i32::MAX};
         let mut best_move = 0;
+
         for m in self.get_valid_moves() {
             let row = self.get_first_empty_row(m);
             self.board[row as usize][m] = if player {'R'} else {'Y'};
+
             let score = self.alpha_beta_minmax(!player, depth - 1, alpha, beta).0;
             
             if max_player == player {
@@ -63,11 +65,10 @@ impl Game {
                     best_move = m;
                 }
                 if beta <= best_score {
-                    let row = self.get_first_empty_row(m) + 1;
-                    self.board[row as usize][m] = '_';
+                    self.undo_move(m);
                     return (best_score, best_move);
                 }
-                alpha = if alpha > best_score {alpha} else {best_score};
+                alpha = std::cmp::max(alpha, best_score);
 
             } else {
                 if score < best_score {
@@ -75,19 +76,18 @@ impl Game {
                     best_move = m;
                 }
                 if alpha >= best_score {
-                    let row = self.get_first_empty_row(m)+1;
-                    self.board[row as usize][m] = '_';
+                    self.undo_move(m);
                     return (best_score, best_move);
                 }
-                beta = if beta < best_score {beta} else {best_score};
+                beta = std::cmp::min(beta, best_score);
 
             }
-            let row = self.get_first_empty_row(m)+1;
-            self.board[row as usize][m] = '_';
+            self.undo_move(m);
         }
         return (best_score, best_move);
         
     }
+
     fn get_first_empty_row(&self, col: usize) -> i32 {
         let mut row = -1;
         for i in 0..self.num_rows {
@@ -97,6 +97,7 @@ impl Game {
         }
         row
     }
+
     fn is_draw(&self) -> bool {
         for i in 0..self.num_cols {
             if self.board[0][i as usize] == '_' {
@@ -114,8 +115,15 @@ impl Game {
         }
         moves
     }
-    
-    
+
+    fn undo_move(&mut self, col: usize) {
+        for i in 0..self.num_rows {
+            if self.board[i as usize][col as usize] != '_' {
+                self.board[i as usize][col as usize] = '_';
+                break;
+            }
+        }
+    }
 }
 
 fn get_diagonal_strings(matrix: &[Vec<char>]) -> Vec<String> {
@@ -318,14 +326,6 @@ impl Component for Game {
                 }
 
                 if is_win(&self.board, sequences) {
-                    println!(
-                        "{} wins!",
-                        if self.turn {
-                            &self.player2
-                        } else {
-                            &self.player1
-                        }
-                    );
                     self.done = true;
                 }
                 self.turn = !self.turn;
@@ -337,10 +337,14 @@ impl Component for Game {
         let link = ctx.link();
         let mut board = vec![];
         for i in 0..self.num_cols {
-            let onclick = link.callback(move |_| Msg::UserMove { col: i as usize });
+            let onclick = link.callback(move |_| {
+                log!("Clicked column {}", i);
+                return Msg::UserMove { col: i as usize }
+            });
+            
             let col: Vec<char> = self.board.iter().map(|row| row[i as usize]).collect();
             board.push(html! {
-                <button disabled={!self.done} class="column" onclick={onclick}>
+                <button disabled={self.done} class="column" onclick={onclick}>
                 
                     { for col.iter().map(|item| html! { 
                         match item {
@@ -386,11 +390,10 @@ impl Component for Game {
         }
     }
     fn rendered(&mut self, ctx: &Context<Self>, first_render: bool) {
-        wasm_logger::init(wasm_logger::Config::default());
-        info!("rendered: {}", first_render);
+        
         if !self.turn && !first_render && !self.done{
-            let col = self.alpha_beta_minmax(self.turn, 3, MIN, MAX).1;
-            let msg = Msg::ComputerMove { col: col };
+            let col = self.alpha_beta_minmax(self.turn, 5, MIN, MAX).1;
+            let msg = Msg::ComputerMove { col };
 
             let link = ctx.link().clone();
             Timeout::new(500, move || {
