@@ -16,7 +16,8 @@ pub struct Game {
 }
 
 pub enum Msg {
-    Move { col: usize },
+    UserMove { col: usize },
+    ComputerMove { col: usize },
 }
 
 #[derive(Properties, PartialEq)]
@@ -214,7 +215,7 @@ impl Component for Game {
         info!("Message");
         match msg {
             
-            Msg::Move { col } => {
+            Msg::UserMove { col } => {
                 // let mut row = 0;
                 // for i in 0..self.num_rows {
                 //     if self.board[i as usize][col as usize] == '_' {
@@ -234,9 +235,9 @@ impl Component for Game {
                             //add to vector of 4 R's in a row
                             sequences.push("RRRR");
                         } else {
-                            self.board[row as usize][col as usize] = 'Y';
-                            //sequence is 4 Y's in a row
-                            sequences.push("YYYY");
+                            // still the computer's turn
+                            return false;
+                            
                         }
                     }
                     "otto" => {
@@ -245,6 +246,68 @@ impl Component for Game {
                         }
                         if self.turn {
                             self.board[row as usize][col as usize] = 'O';
+                        } else {
+                            // still the computer's turn
+                            return false;
+                        }
+                        sequences.push("OTTO");
+                        sequences.push("TOOT");
+                    }
+                    _ => {}
+                }
+
+                if is_win(&self.board, sequences) {
+                    println!(
+                        "{} wins!",
+                        if self.turn {
+                            &self.player2
+                        } else {
+                            &self.player1
+                        }
+                    );
+                    self.done = true;
+                }
+                self.turn = !self.turn;
+                true
+            }
+            Msg::ComputerMove {col: _col } => {
+                let mut sequences = Vec::new();
+                match self.game_type.as_str() {
+                    "connect4" => {
+                        let mut col = 0;
+                        for i in 0..self.num_cols {
+                            if self.board[0 as usize][i as usize] == '_' {
+                                col = i;
+                                break;
+                            }
+                        }
+                        let row = self.get_first_empty_row(col as usize);
+                        if self.board[row as usize][col as usize] != '_' {
+                            return false;
+                        }
+                        if self.turn {
+                            // still the user's turn
+                            return false;
+                        } else {
+                            self.board[row as usize][col as usize] = 'Y';
+                            sequences.push("YYYY");
+                        }
+                    }
+                    "otto" => {
+                        let mut col = 0;
+                        for i in 0..self.num_cols {
+                            if self.board[0 as usize][i as usize] == '_' {
+                                col = i;
+                                break;
+                            }
+                        }
+                        let row = self.get_first_empty_row(col as usize);
+                        if self.board[row as usize][col as usize] != '_' {
+                            return false;
+                        }
+                        if self.turn {
+                            // still the user's turn
+                            return false;
                         } else {
                             self.board[row as usize][col as usize] = 'T';
                         }
@@ -286,7 +349,7 @@ impl Component for Game {
         //     });
         // }
         for i in 0..self.num_cols {
-            let onclick = link.callback(move |_| Msg::Move { col: i as usize });
+            let onclick = link.callback(move |_| Msg::UserMove { col: i as usize });
             let col: Vec<char> = self.board.iter().map(|row| row[i as usize]).collect();
             board.push(html! {
                 <button class="column" onclick={onclick}>
@@ -318,7 +381,7 @@ impl Component for Game {
     fn rendered(&mut self, ctx: &Context<Self>, first_render: bool) {
         if !self.turn && !first_render{
             let col = self.alpha_beta_minmax(self.turn, 4, MIN, MAX).1;
-            let msg = Msg::Move { col };
+            let msg = Msg::ComputerMove { col: col };
 
             let link = ctx.link().clone();
             Timeout::new(1000, move || {
