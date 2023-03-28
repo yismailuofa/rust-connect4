@@ -80,7 +80,7 @@ body {
   border-radius: 50%;
   position: absolute;
   top: -80px;
-  left: 5px;
+  left: 10px;
   transition: all 200ms;
 }
 

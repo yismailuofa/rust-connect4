@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
 use argon2::{hash_encoded, verify_encoded};
+use client::{ConnectGame, Leaderboard, User};
 use rocket::{futures::TryStreamExt, http::Status, serde::json::Json};
 use rocket_db_pools::{
     mongodb::{self, bson::doc, Collection},
     Connection, Database,
 };
-use server::{ConnectGame, Leaderboard, User};
 
 #[macro_use]
 extern crate rocket;
