@@ -1,7 +1,7 @@
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::Route;
+use crate::MainRoute;
 
 #[function_component]
 pub fn Navbar() -> Html {
@@ -9,21 +9,15 @@ pub fn Navbar() -> Html {
         <nav class="navbar is-primary" role="navigation" aria-label="main navigation">
             <div class={classes!("navbar-menu")}>
                 <div class="navbar-start">
-                    <Link<Route> classes={classes!("navbar-item")} to={Route::Connect4}>
+                    <Link<MainRoute> classes={classes!("navbar-item")} to={MainRoute::Connect4}>
                         { "Connect 4" }
-                    </Link<Route>>
-                    <Link<Route> classes={classes!("navbar-item")} to={Route::TootOtto}>
+                    </Link<MainRoute>>
+                    <Link<MainRoute> classes={classes!("navbar-item")} to={MainRoute::TootOtto}>
                         { "TOOT-OTTO" }
-                    </Link<Route>>
-                    <Link<Route> classes={classes!("navbar-item")} to={Route::Leaderboard}>
+                    </Link<MainRoute>>
+                    <Link<MainRoute> classes={classes!("navbar-item")} to={MainRoute::Leaderboard}>
                         { "Leaderboard" }
-                    </Link<Route>>
-                    <Link<Route> classes={classes!("navbar-item")} to={Route::Login}>
-                        { "Login" }
-                    </Link<Route>>
-                    <Link<Route> classes={classes!("navbar-item")} to={Route::Register}>
-                        { "Sign Up" }
-                    </Link<Route>>
+                    </Link<MainRoute>>
                 </div>
             </div>
         </nav>

@@ -6,21 +6,27 @@ use crate::components::connect4::{Connect4, TootOtto};
 use crate::components::login_form::LoginForm;
 use crate::components::navbar::Navbar;
 use crate::components::register_form::RegisterForm;
+use client::User;
 
 #[derive(Routable, PartialEq, Eq, Clone, Debug)]
-pub enum Route {
-    #[at("/connect4")]
+pub enum MainRoute {
+    #[at("/")]
     Connect4,
     #[at("/toot-otto")]
     TootOtto,
     #[at("/leaderboard")]
     Leaderboard,
-    #[at("/login")]
+    #[not_found]
+    #[at("/404")]
+    NotFound,
+}
+
+#[derive(Routable, PartialEq, Eq, Clone, Debug)]
+pub enum LoginRoute {
+    #[at("/")]
     Login,
     #[at("/register")]
     Register,
-    #[at("/")]
-    Home,
     #[not_found]
     #[at("/404")]
     NotFound,
@@ -28,37 +34,54 @@ pub enum Route {
 
 #[function_component]
 fn App() -> Html {
+    let user = use_state(|| Option::<User>::None);
+
     html! {
         <BrowserRouter>
-            <Navbar />
-
-            <main>
-                <Switch<Route> render={switch} />
-                // <Game player1={"Player 1".to_string()} player2={"Player 2".to_string()} game_type={"Connect 4".to_string()} num_rows={100} num_cols={100} />
-           </main>
+            {
+                if let Some(_) = &*user {
+                    html! {
+                        <>
+                            <Navbar/>
+                            <Switch<MainRoute> render={switch_main} />
+                        </>
+                    }
+                } else {
+                    html! {
+                        <>
+                            <Switch<LoginRoute> render={switch_login} />
+                        </>
+                    }
+                }
+            }
         </BrowserRouter>
     }
 }
 
-fn switch(routes: Route) -> Html {
+fn switch_main(routes: MainRoute) -> Html {
     match routes {
-        Route::Connect4 => {
+        MainRoute::Connect4 => {
             html! { <Connect4 /> }
         }
-        Route::TootOtto => {
+        MainRoute::TootOtto => {
             html! { <TootOtto /> }
         }
-        Route::Leaderboard => todo!(),
-        Route::Login => {
+        MainRoute::Leaderboard => todo!(),
+        MainRoute::NotFound => {
+            html! { "Page not found." }
+        }
+    }
+}
+
+fn switch_login(routes: LoginRoute) -> Html {
+    match routes {
+        LoginRoute::Login => {
             html! { <LoginForm /> }
         }
-        Route::Register => {
+        LoginRoute::Register => {
             html! { <RegisterForm /> }
         }
-        Route::Home => {
-            html! { "Home" }
-        }
-        Route::NotFound => {
+        LoginRoute::NotFound => {
             html! { "Page not found." }
         }
     }
