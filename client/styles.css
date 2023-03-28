@@ -104,50 +104,18 @@ body {
   animation-fill-mode: both;
 }
 
-@-webkit-keyframes bounce {
-  0% {
-    -webkit-transform: translateY(-100px);
-  }
-  10% {
-    -webkit-transform: translateY(-80px);
-  }
-  20% {
-    -webkit-transform: translateY(-60px);
-  }
-  30% {
-    -webkit-transform: translateY(-40px);
-  }
-  40% {
-    -webkit-transform: translateY(-20px);
-  }
-  50%,
-  70%,
-  100% {
-    -webkit-transform: translateY(0);
-  }
-  60% {
-    -webkit-transform: translateY(-20px);
-  }
-  80% {
-    -webkit-transform: translateY(-10px);
-  }
-}
-
 @keyframes bounce {
   0% {
-    -webkit-transform: translateY(-100px);
+    -webkit-transform: translateY(-280px);
   }
   10% {
-    -webkit-transform: translateY(-80px);
+    -webkit-transform: translateY(-200px);
   }
   20% {
-    -webkit-transform: translateY(-60px);
-  }
-  30% {
-    -webkit-transform: translateY(-40px);
+    -webkit-transform: translateY(-170px);
   }
   40% {
-    -webkit-transform: translateY(-20px);
+    -webkit-transform: translateY(-100px);
   }
   50%,
   70%,
@@ -165,7 +133,7 @@ body {
 .bounce {
   -webkit-animation-name: bounce;
   animation-name: bounce;
-  animation-duration: 400ms;
+  animation-duration: 300ms;
 }
 
 .circle.red,

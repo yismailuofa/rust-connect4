@@ -1,7 +1,6 @@
 use std::i32::{MIN, MAX};
 
 use gloo_timers::callback::Timeout;
-use log::info;
 use yew::*;
 
 pub struct Game {
@@ -154,7 +153,6 @@ fn get_diagonal_strings(matrix: &[Vec<char>]) -> Vec<String> {
 }
 
 fn is_win(board: &Vec<Vec<char>>, sequences: Vec<&str>) -> bool {
-    wasm_logger::init(wasm_logger::Config::default());
 
     for row in board {
         let row_str: String = row.into_iter().collect();
@@ -178,7 +176,7 @@ fn is_win(board: &Vec<Vec<char>>, sequences: Vec<&str>) -> bool {
 
     // Check all possible diagonals for a winning sequence
     let diagonals = get_diagonal_strings(&board);
-    info!("Diagonals: {:?}", diagonals);
+
     for diagonal in diagonals {
         for sequence in sequences.clone() {
             if diagonal.contains(&sequence) {
@@ -212,17 +210,9 @@ impl Component for Game {
         }
     }
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
-        info!("Message");
         match msg {
             
             Msg::UserMove { col } => {
-                // let mut row = 0;
-                // for i in 0..self.num_rows {
-                //     if self.board[i as usize][col as usize] == '_' {
-                //         row = i;
-                //         //break;
-                //     }
-                // }
                 let row = self.get_first_empty_row(col);
                 let mut sequences = Vec::new();
                 match self.game_type.as_str() {
