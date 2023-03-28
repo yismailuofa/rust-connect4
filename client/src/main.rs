@@ -6,7 +6,7 @@ mod components;
 use crate::components::login_form::LoginForm;
 use crate::components::register_form::RegisterForm;
 use crate::components::navbar::Navbar;
-use crate::components::connect4::Connect4;
+use crate::components::connect4::{Connect4, TootOtto};
 
 #[derive(Routable, PartialEq, Eq, Clone, Debug)]
 pub enum Route {
@@ -46,9 +46,9 @@ fn switch(routes: Route) -> Html {
         Route::Connect4 => {
             html! { <Connect4 /> }
         }
-        // Route::TootOtto => {
-        //     html! { <TootOtto /> }
-        // }
+        Route::TootOtto => {
+            html! { <TootOtto /> }
+        }
         // Route::Leaderboard => {
         //     html! { <Leaderboard /> }
         // }

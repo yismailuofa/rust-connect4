@@ -7,13 +7,6 @@ use crate::Route;
 pub fn Navbar() -> Html {
     let navbar_active = use_state_eq(|| false);
 
-    let toggle_navbar = {
-        let navbar_active = navbar_active.clone();
-
-        Callback::from(move |_| {
-            navbar_active.set(!*navbar_active);
-        })
-    };
 
     let active_class = if !*navbar_active { "is-active" } else { "" };
 
