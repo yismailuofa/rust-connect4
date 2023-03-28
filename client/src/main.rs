@@ -1,12 +1,11 @@
 use yew::prelude::*;
-use yew_router::history::{AnyHistory, History, MemoryHistory};
 use yew_router::prelude::*;
 
 mod components;
-use crate::components::login_form::LoginForm;
-use crate::components::register_form::RegisterForm;
-use crate::components::navbar::Navbar;
 use crate::components::connect4::{Connect4, TootOtto};
+use crate::components::login_form::LoginForm;
+use crate::components::navbar::Navbar;
+use crate::components::register_form::RegisterForm;
 
 #[derive(Routable, PartialEq, Eq, Clone, Debug)]
 pub enum Route {
