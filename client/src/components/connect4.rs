@@ -291,12 +291,12 @@ impl Component for Game {
             let onclick = link.callback(move |_| Msg::Move { col: i as usize });
             let col: Vec<char> = self.board.iter().map(|row| row[i as usize]).collect();
             board.push(html! {
-                <button class="grid" onclick={onclick}>
+                <button class="column" onclick={onclick}>
                 
                     { for col.iter().map(|item| html! { 
                         match item {
-                            'R' => html! { <div class="circle" style="background-color: #ED5A8B;"></div> },
-                            'Y' => html! { <div class="circle" style="background-color: #6F8FEA;text-align: center;"></div> },
+                            'R' => html! { <div class="circle bounce" style="background-color: #ED5A8B;"></div> },
+                            'Y' => html! { <div class="circle bounce" style="background-color: #6F8FEA;text-align: center;"></div> },
                             'T'|'O' => html! { <div class="circle" style="background-color: #FFFFFF;">{item}</div> },
                             _ => html! { <div class="circle"></div> },
                         }
@@ -313,7 +313,7 @@ impl Component for Game {
                 <h2>{ "Player 2: " }{ &self.player2 }</h2>
                 <h2>{ "Turn: " }{ if self.turn { &self.player1 } else { &self.player2 } }</h2>
                 <h2>{ "Done? : " }{ &self.done }</h2>
-                <div>{ board }</div>
+                <div class="grid">{ board }</div>
             </div>
         }
     }
