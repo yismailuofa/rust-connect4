@@ -66,10 +66,16 @@ fn App() -> Html {
 fn switch_main(routes: MainRoute) -> Html {
     match routes {
         MainRoute::Connect4 => {
-            html! { <Connect4 /> }
+            html! { <div class="game-container">
+                        <Connect4 />
+                        </div>
+                    }
         }
         MainRoute::TootOtto => {
-            html! { <TootOtto /> }
+            html! { <div class="game-container">
+                        <TootOtto />
+                    </div>
+                }
         }
         MainRoute::Leaderboard => todo!(),
         MainRoute::NotFound => {

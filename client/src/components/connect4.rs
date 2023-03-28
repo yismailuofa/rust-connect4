@@ -1,3 +1,5 @@
+use std::i32::{MIN, MAX};
+
 use log::info;
 use yew::*;
 
@@ -14,7 +16,7 @@ pub struct Game {
 }
 
 pub enum Msg {
-    Move { col: i32 },
+    Move { col: usize },
 }
 
 #[derive(Properties, PartialEq)]
@@ -24,6 +26,96 @@ pub struct Props {
     pub game_type: String,
     pub num_rows: i32,
     pub num_cols: i32,
+}
+
+impl Game {
+    fn alpha_beta_minmax(&mut self, player:bool, depth: i32, mut alpha: i32, mut beta: i32) -> (i32, usize) {
+        // make next_player an empty hashmap
+        let maxPlayer = true;
+        let sequences = match self.game_type.as_str() {
+            "connect4" => if player {vec!["RRRR"]} else {vec!["OOOO"]},
+            "otto" => vec!["OTTO", "TOOT"],
+            _ => vec!["XXXX"],
+        };
+            
+        if is_win(&self.board, sequences) {
+            if player {
+                return (1, 0);
+            } else {
+                return (-1, 0);
+            }
+        }
+        else if self.is_draw() || depth == 0 {
+            return (0, 0);
+        }
+        let mut bestScore = if maxPlayer == player {i32::MIN} else {i32::MAX};
+        let mut bestMove = 0;
+        for m in self.get_valid_moves() {
+            let row = self.get_first_empty_row(m);
+            self.board[row as usize][m] = if player {'R'} else {'Y'};
+            let score = self.alpha_beta_minmax(!player, depth - 1, alpha, beta).0;
+            
+            if maxPlayer == player {
+                if score > bestScore {
+                    bestScore = score;
+                    bestMove = m;
+                }
+                if beta <= bestScore {
+                    let row = self.get_first_empty_row(m) +1;
+                    self.board[row as usize][m] = '_';
+                    return (bestScore, bestMove);
+                }
+                alpha = if alpha > bestScore {alpha} else {bestScore};
+
+            } else {
+                if score < bestScore {
+                    bestScore = score;
+                    bestMove = m;
+                }
+                if alpha >= bestScore {
+                    let row = self.get_first_empty_row(m)+1;
+                    self.board[row as usize][m] = '_';
+                    return (bestScore, bestMove);
+                }
+                beta = if beta < bestScore {beta} else {bestScore};
+
+            }
+            let row = self.get_first_empty_row(m)+1;
+            self.board[row as usize][m] = '_';
+            //self.board[(self.get_first_empty_row(m )+1) as usize][m] = '_';
+        }
+        return (bestScore, bestMove);
+        
+    }
+    fn get_first_empty_row(&self, col: usize) -> i32 {
+        let mut row = -1;
+        for i in 0..self.num_rows {
+            if self.board[i as usize][col as usize] == '_' {
+                row = i;
+                //break;
+            }
+        }
+        row
+    }
+    fn is_draw(&self) -> bool {
+        for i in 0..self.num_cols {
+            if self.board[0][i as usize] == '_' {
+                return false;
+            }
+        }
+        true
+    }
+    fn get_valid_moves(&self) -> Vec<usize> {
+        let mut moves = vec![];
+        for i in 0..self.num_cols {
+            if self.board[0][i as usize] == '_' {
+                moves.push(i as usize);
+            }
+        }
+        moves
+    }
+    
+    
 }
 
 fn get_diagonal_strings(matrix: &[Vec<char>]) -> Vec<String> {
@@ -121,16 +213,18 @@ impl Component for Game {
         }
     }
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
-
+        info!("Message");
         match msg {
+            
             Msg::Move { col } => {
-                let mut row = 0;
-                for i in 0..self.num_rows {
-                    if self.board[i as usize][col as usize] == '_' {
-                        row = i;
-                        //break;
-                    }
-                }
+                // let mut row = 0;
+                // for i in 0..self.num_rows {
+                //     if self.board[i as usize][col as usize] == '_' {
+                //         row = i;
+                //         //break;
+                //     }
+                // }
+                let row = self.get_first_empty_row(col);
                 let mut sequences = Vec::new();
                 match self.game_type.as_str() {
                     "connect4" => {
@@ -194,10 +288,10 @@ impl Component for Game {
         //     });
         // }
         for i in 0..self.num_cols {
-            let onclick = link.callback(move |_| Msg::Move { col: i });
+            let onclick = link.callback(move |_| Msg::Move { col: i as usize });
             let col: Vec<char> = self.board.iter().map(|row| row[i as usize]).collect();
             board.push(html! {
-                <button onclick={onclick}>
+                <button class="grid" onclick={onclick}>
                 
                     { for col.iter().map(|item| html! { 
                         match item {
@@ -221,6 +315,13 @@ impl Component for Game {
                 <h2>{ "Done? : " }{ &self.done }</h2>
                 <div>{ board }</div>
             </div>
+        }
+    }
+    fn rendered(&mut self, ctx: &Context<Self>, first_render: bool) {
+        if !self.turn && !first_render{
+            let col = self.alpha_beta_minmax(self.turn, 4, MIN, MAX).1;
+            let msg = Msg::Move { col };
+            ctx.link().send_message(msg);
         }
     }
 }
