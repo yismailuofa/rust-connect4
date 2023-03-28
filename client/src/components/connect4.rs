@@ -204,3 +204,10 @@ impl Component for Game {
     
 
 }
+
+#[function_component]
+pub fn Connect4() -> Html {
+    html! {
+        <Game player1={"Muneer".to_string()} player2={"Ismail".to_string()} game_type={"Connect 4".to_string()} num_rows={6} num_cols={6} />
+    }
+}

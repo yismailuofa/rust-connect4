@@ -1,6 +1,4 @@
 use yew::prelude::*;
-mod connect4;
-use connect4::Game;
 use yew_router::history::{AnyHistory, History, MemoryHistory};
 use yew_router::prelude::*;
 
@@ -8,6 +6,7 @@ mod components;
 use crate::components::login_form::LoginForm;
 use crate::components::register_form::RegisterForm;
 use crate::components::navbar::Navbar;
+use crate::components::connect4::Connect4;
 
 #[derive(Routable, PartialEq, Eq, Clone, Debug)]
 pub enum Route {
@@ -36,6 +35,7 @@ fn App() -> Html {
 
             <main>
                 <Switch<Route> render={switch} />
+                // <Game player1={"Player 1".to_string()} player2={"Player 2".to_string()} game_type={"Connect 4".to_string()} num_rows={100} num_cols={100} />
            </main>
         </BrowserRouter>
     }
@@ -43,9 +43,9 @@ fn App() -> Html {
 
 fn switch(routes: Route) -> Html {
     match routes {
-        // Route::Connect4 => {
-        //     html! { <Connect4 /> }
-        // }
+        Route::Connect4 => {
+            html! { <Connect4 /> }
+        }
         // Route::TootOtto => {
         //     html! { <TootOtto /> }
         // }
@@ -54,7 +54,6 @@ fn switch(routes: Route) -> Html {
         // }
         Route::Login => {
             html! { <LoginForm /> }
-           <Game player1={"Player 1".to_string()} player2={"Player 2".to_string()} game_type={"Connect 4".to_string()} num_rows={100} num_cols={100} />
         }
         Route::Register => {
             html! { <RegisterForm /> }
