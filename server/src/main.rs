@@ -146,7 +146,7 @@ async fn leaderboard(db: Connection<Db>) -> Result<Json<Vec<Leaderboard>>, Statu
     let mut leaderboard: Vec<Leaderboard> = leaderboard.into_iter().map(|(_, v)| v).collect();
 
     leaderboard.sort_by(|a, b| b.wins.cmp(&a.wins));
-
+    
     Ok(Json(leaderboard))
 }
 

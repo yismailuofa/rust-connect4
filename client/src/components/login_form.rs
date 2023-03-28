@@ -25,7 +25,7 @@ pub fn LoginForm(props: &Props) -> Html {
 
     html! {
         <form>
-            <!-- <div>
+            <div>
                 <label for="username">{"Username"}</label>
                 <input type="text" name="username" />
             </div>
