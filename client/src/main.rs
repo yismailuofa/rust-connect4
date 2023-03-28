@@ -29,6 +29,7 @@ pub enum Route {
 #[function_component]
 fn App() -> Html {
     html! {
+            
            <BrowserRouter>
             <Navbar />
 
