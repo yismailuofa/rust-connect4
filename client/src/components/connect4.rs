@@ -295,12 +295,8 @@ impl Component for Game {
             });
         }
         html! {
-            <div>
-                <h1>{ "Connect 4" }</h1>
-                <h2>{ "Player 1: " }{ &self.player1 }</h2>
-                <h2>{ "Player 2: " }{ &self.player2 }</h2>
-                <h2>{ "Turn: " }{ if self.turn { &self.player1 } else { &self.player2 } }</h2>
-                <h2>{ "Done? : " }{ &self.done }</h2>
+            <div class="game-container">
+                <h1 class="title">{ "Connect 4" }</h1>
                 <div class="grid">{ board }</div>
             </div>
         }

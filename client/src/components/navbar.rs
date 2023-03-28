@@ -6,7 +6,7 @@ use crate::MainRoute;
 #[function_component]
 pub fn Navbar() -> Html {
     html! {
-        <nav>
+        <nav class="navbar">
             <div>
                 <div class="navbar-links">
                     <Link<MainRoute> classes={classes!("navbar-item")} to={MainRoute::Connect4}>
