@@ -161,3 +161,35 @@ body {
   display: flex;
   justify-content: space-evenly;
 }
+
+.navbar-item {
+  color: white;
+  text-decoration: none;
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+.title {
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 400;
+}
+
+.subtitle {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 300;
+  padding-bottom: 60px;
+}
+
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 8px;
+}
+
+.navbar {
+  padding-bottom: 25px;
+}
