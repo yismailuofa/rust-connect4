@@ -1,5 +1,6 @@
 use std::i32::{MIN, MAX};
 
+use gloo_timers::callback::Timeout;
 use log::info;
 use yew::*;
 
@@ -12,7 +13,6 @@ pub struct Game {
     num_rows: i32,
     num_cols: i32,
     done: bool,
-    //grid:
 }
 
 pub enum Msg {
@@ -31,7 +31,7 @@ pub struct Props {
 impl Game {
     fn alpha_beta_minmax(&mut self, player:bool, depth: i32, mut alpha: i32, mut beta: i32) -> (i32, usize) {
         // make next_player an empty hashmap
-        let maxPlayer = true;
+        let max_player = true;
         let sequences = match self.game_type.as_str() {
             "connect4" => if player {vec!["RRRR"]} else {vec!["OOOO"]},
             "otto" => vec!["OTTO", "TOOT"],
@@ -48,43 +48,42 @@ impl Game {
         else if self.is_draw() || depth == 0 {
             return (0, 0);
         }
-        let mut bestScore = if maxPlayer == player {i32::MIN} else {i32::MAX};
-        let mut bestMove = 0;
+        let mut best_score = if max_player == player {i32::MIN} else {i32::MAX};
+        let mut best_move = 0;
         for m in self.get_valid_moves() {
             let row = self.get_first_empty_row(m);
             self.board[row as usize][m] = if player {'R'} else {'Y'};
             let score = self.alpha_beta_minmax(!player, depth - 1, alpha, beta).0;
             
-            if maxPlayer == player {
-                if score > bestScore {
-                    bestScore = score;
-                    bestMove = m;
+            if max_player == player {
+                if score > best_score {
+                    best_score = score;
+                    best_move = m;
                 }
-                if beta <= bestScore {
-                    let row = self.get_first_empty_row(m) +1;
+                if beta <= best_score {
+                    let row = self.get_first_empty_row(m) + 1;
                     self.board[row as usize][m] = '_';
-                    return (bestScore, bestMove);
+                    return (best_score, best_move);
                 }
-                alpha = if alpha > bestScore {alpha} else {bestScore};
+                alpha = if alpha > best_score {alpha} else {best_score};
 
             } else {
-                if score < bestScore {
-                    bestScore = score;
-                    bestMove = m;
+                if score < best_score {
+                    best_score = score;
+                    best_move = m;
                 }
-                if alpha >= bestScore {
+                if alpha >= best_score {
                     let row = self.get_first_empty_row(m)+1;
                     self.board[row as usize][m] = '_';
-                    return (bestScore, bestMove);
+                    return (best_score, best_move);
                 }
-                beta = if beta < bestScore {beta} else {bestScore};
+                beta = if beta < best_score {beta} else {best_score};
 
             }
             let row = self.get_first_empty_row(m)+1;
             self.board[row as usize][m] = '_';
-            //self.board[(self.get_first_empty_row(m )+1) as usize][m] = '_';
         }
-        return (bestScore, bestMove);
+        return (best_score, best_move);
         
     }
     fn get_first_empty_row(&self, col: usize) -> i32 {
@@ -92,7 +91,6 @@ impl Game {
         for i in 0..self.num_rows {
             if self.board[i as usize][col as usize] == '_' {
                 row = i;
-                //break;
             }
         }
         row
@@ -321,7 +319,12 @@ impl Component for Game {
         if !self.turn && !first_render{
             let col = self.alpha_beta_minmax(self.turn, 4, MIN, MAX).1;
             let msg = Msg::Move { col };
-            ctx.link().send_message(msg);
+
+            let link = ctx.link().clone();
+            Timeout::new(1000, move || {
+                link.send_message(msg);
+            }).forget();
+            
         }
     }
 }
