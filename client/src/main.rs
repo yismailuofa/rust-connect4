@@ -35,14 +35,12 @@ pub enum LoginRoute {
     NotFound,
 }
 
-#[function_component]
+#[function_component()]
 fn App() -> Html {
-    let user = use_state(|| {
-        Option::<User>::Some(User {
-            username: "".to_string(),
-            password: "".to_string(),
-        })
-    });
+    let user = use_state(|| Option::<User>::None);
+
+    let user_clone = user.clone();
+    let update_user = Callback::from(move |new_user: Option<User>| user_clone.set(new_user));
 
     html! {
         <BrowserRouter>
@@ -57,7 +55,7 @@ fn App() -> Html {
                 } else {
                     html! {
                         <>
-                            <Switch<LoginRoute> render={switch_login} />
+                            <Switch<LoginRoute> render={switch_login(update_user)} />
                         </>
                     }
                 }
@@ -93,10 +91,10 @@ fn switch_main(routes: MainRoute) -> Html {
     }
 }
 
-fn switch_login(routes: LoginRoute) -> Html {
-    match routes {
+fn switch_login(on_login: Callback<Option<User>>) -> impl Fn(LoginRoute) -> Html {
+    move |routes: LoginRoute| match routes {
         LoginRoute::Login => {
-            html! { <LoginForm /> }
+            html! { <LoginForm set_user={on_login.clone()} /> }
         }
         LoginRoute::Register => {
             html! { <RegisterForm /> }

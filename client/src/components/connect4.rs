@@ -1,6 +1,7 @@
 use std::i32::{MIN, MAX};
 
 use gloo_timers::callback::Timeout;
+use log::info;
 use yew::*;
 
 pub struct Game {
@@ -17,6 +18,7 @@ pub struct Game {
 pub enum Msg {
     UserMove { col: usize },
     ComputerMove { col: usize },
+    Reset,
 }
 
 #[derive(Properties, PartialEq)]
@@ -164,7 +166,7 @@ fn is_win(board: &Vec<Vec<char>>, sequences: Vec<&str>) -> bool {
     }
 
     // Check columns for a winning sequence
-    let n = board.len();
+    let n = board[0].len();
     for col_idx in 0..n {
         let col_str: String = board.iter().map(|row| row[col_idx]).collect();
         for sequence in sequences.clone() {
@@ -211,7 +213,15 @@ impl Component for Game {
     }
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            
+            Msg::Reset => {
+                self.board = vec![
+                    vec!['_'; self.num_cols.try_into().unwrap()];
+                    self.num_rows.try_into().unwrap()
+                ];
+                self.turn = true;
+                self.done = false;
+                true
+            }
             Msg::UserMove { col } => {
                 let row = self.get_first_empty_row(col);
                 let mut sequences = Vec::new();
@@ -330,13 +340,13 @@ impl Component for Game {
             let onclick = link.callback(move |_| Msg::UserMove { col: i as usize });
             let col: Vec<char> = self.board.iter().map(|row| row[i as usize]).collect();
             board.push(html! {
-                <button class="column" onclick={onclick}>
+                <button disabled={!self.done} class="column" onclick={onclick}>
                 
                     { for col.iter().map(|item| html! { 
                         match item {
                             'R' => html! { <div class="circle bounce" style="background-color: #ED5A8B;"></div> },
                             'Y' => html! { <div class="circle bounce" style="background-color: #6F8FEA;text-align: center;"></div> },
-                            'T'|'O' => html! { <div class="circle" style="background-color: #FFFFFF;">{item}</div> },
+                            'T'|'O' => html! { <div class="circle bounce" style="background-color: #FFFFFF;">{item}</div> },
                             _ => html! { <div class="circle"></div> },
                         }
                     }) }
@@ -365,21 +375,25 @@ impl Component for Game {
             "Toot & Otto"
         };
 
+        
         html! {
             <div class="game-container">
-                <h1 class="title">{ title }</h1>
-                <h2 class="subtitle">{ subtitle }</h2>
-                <div class="grid">{ board }</div>
-            </div>
+            <h1 class="title">{ title }</h1>
+            <h2 class="subtitle">{ subtitle }</h2>
+            <div class="grid">{ board }</div>
+            <button class="restart" onclick={link.callback(|_| Msg::Reset)}>{"Restart"}</button>
+        </div>
         }
     }
     fn rendered(&mut self, ctx: &Context<Self>, first_render: bool) {
-        if !self.turn && !first_render{
-            let col = self.alpha_beta_minmax(self.turn, 4, MIN, MAX).1;
+        wasm_logger::init(wasm_logger::Config::default());
+        info!("rendered: {}", first_render);
+        if !self.turn && !first_render && !self.done{
+            let col = self.alpha_beta_minmax(self.turn, 3, MIN, MAX).1;
             let msg = Msg::ComputerMove { col: col };
 
             let link = ctx.link().clone();
-            Timeout::new(1000, move || {
+            Timeout::new(500, move || {
                 link.send_message(msg);
             }).forget();
             
@@ -390,7 +404,7 @@ impl Component for Game {
 #[function_component]
 pub fn Connect4() -> Html {
     html! {
-        <Game player1={"Muneer".to_string()} player2={"Ismail".to_string()} game_type={"connect4".to_string()} num_rows={6} num_cols={6} />
+        <Game player1={"Muneer".to_string()} player2={"Ismail".to_string()} game_type={"connect4".to_string()} num_rows={8} num_cols={6} />
     }
 }
 #[function_component]
