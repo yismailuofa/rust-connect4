@@ -19,18 +19,6 @@ pub fn Navbar() -> Html {
 
     html! {
         <nav class="navbar is-primary" role="navigation" aria-label="main navigation">
-            <div class="navbar-brand">
-                <h1 class="navbar-item is-size-3">{ "Yew Blog" }</h1>
-
-                <button class={classes!("navbar-burger", "burger", active_class)}
-                    aria-label="menu" aria-expanded="false"
-                    onclick={toggle_navbar}
-                >
-                    <span aria-hidden="true"></span>
-                    <span aria-hidden="true"></span>
-                    <span aria-hidden="true"></span>
-                </button>
-            </div>
             <div class={classes!("navbar-menu", active_class)}>
                 <div class="navbar-start">
                     <Link<Route> classes={classes!("navbar-item")} to={Route::Connect4}>
