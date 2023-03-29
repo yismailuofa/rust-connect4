@@ -1,18 +1,16 @@
-use std::i32::{MIN, MAX};
-
 use client::GameType;
+
 use gloo_timers::callback::Timeout;
-use yew::*;
-use gloo_console::log;
+use yew::prelude::*;
 
 pub struct Game {
     board: Vec<Vec<char>>,
-    turn: bool,
     player1: String,
     player2: String,
     game_type: GameType,
     num_rows: i32,
     num_cols: i32,
+    user_turn: bool,
     done: bool,
 }
 
@@ -27,48 +25,66 @@ pub struct Props {
     pub player1: String,
     pub player2: String,
     pub game_type: GameType,
+    #[prop_or(7)]
     pub num_rows: i32,
+    #[prop_or(6)]
     pub num_cols: i32,
 }
 
 impl Game {
-    fn alpha_beta_minmax(&mut self, player:bool, depth: i32, mut alpha: i32, mut beta: i32) -> (i32, usize) {
-        // make next_player an empty hashmap
-        let sequences = match self.game_type {
-            GameType::Connect4 => if player {vec!["RRRR"]} else {vec!["YYYY"]},
-            GameType::TootAndOtto => vec!["OTTO", "TOOT"]
+    fn alpha_beta_minmax(
+        &mut self,
+        player: char,
+        depth: i32,
+        mut alpha: i32,
+        mut beta: i32,
+    ) -> (i32, usize) {
+        let max_player = match self.game_type {
+            GameType::Connect4 => 'R',
+            GameType::TootAndOtto => 'O',
         };
-            
-        if is_win(&self.board, sequences) {
-            if player {
-                return (-1, 0);
+
+        let next_player = match player {
+            'R' => 'B',
+            'B' => 'R',
+            'T' => 'O',
+            'O' => 'T',
+            _ => panic!("Invalid player!"),
+        };
+
+        if self.is_win() {
+            if player == max_player {
+                return (-1, 0); // Min player won
             } else {
-                return (1, 0);
+                return (1, 0); // Max player won
             }
-        }
-        else if self.is_draw() || depth == 0 {
+        } else if self.is_draw() || depth == 0 {
             return (0, 0);
         }
-        let mut best_score = if player {i32::MIN} else {i32::MAX};
+
+        let mut best_score = if player == max_player {
+            i32::MIN
+        } else {
+            i32::MAX
+        };
         let mut best_move = 0;
 
         for m in self.get_valid_moves() {
-            let row = self.get_first_empty_row(m);
-            self.board[row as usize][m] = if player {'R'} else {'Y'};
+            self.perform_move(m, player);
 
-            let score = self.alpha_beta_minmax(!player, depth - 1, alpha, beta).0;
-            
-            if player {
+            let (score, _) = self.alpha_beta_minmax(next_player, depth - 1, alpha, beta);
+
+            if player == max_player {
                 if score > best_score {
                     best_score = score;
                     best_move = m;
                 }
+
                 if beta <= best_score {
                     self.undo_move(m);
                     return (best_score, best_move);
                 }
                 alpha = std::cmp::max(alpha, best_score);
-
             } else {
                 if score < best_score {
                     best_score = score;
@@ -79,32 +95,16 @@ impl Game {
                     return (best_score, best_move);
                 }
                 beta = std::cmp::min(beta, best_score);
-
             }
             self.undo_move(m);
         }
         return (best_score, best_move);
-        
-    }
-
-    fn get_first_empty_row(&self, col: usize) -> i32 {
-        let mut row = -1;
-        for i in 0..self.num_rows {
-            if self.board[i as usize][col as usize] == '_' {
-                row = i;
-            }
-        }
-        row
     }
 
     fn is_draw(&self) -> bool {
-        for i in 0..self.num_cols {
-            if self.board[0][i as usize] == '_' {
-                return false;
-            }
-        }
-        true
+        self.get_valid_moves().len() == 0
     }
+
     fn get_valid_moves(&self) -> Vec<usize> {
         let mut moves = vec![];
         for i in 0..self.num_cols {
@@ -122,6 +122,55 @@ impl Game {
                 break;
             }
         }
+    }
+
+    fn perform_move(&mut self, col: usize, player: char) {
+        for row in (0..self.num_rows).rev() {
+            if self.board[row as usize][col as usize] == '_' {
+                self.board[row as usize][col as usize] = player;
+                break;
+            }
+        }
+    }
+
+    fn is_win(&self) -> bool {
+        let sequences = match self.game_type {
+            GameType::Connect4 => vec!["RRRR", "BBBB"],
+            GameType::TootAndOtto => vec!["OTTO", "TOOT"],
+        };
+
+        for row in &self.board {
+            let row_str: String = row.into_iter().collect();
+            for sequence in sequences.clone() {
+                if row_str.contains(&sequence) {
+                    return true;
+                }
+            }
+        }
+
+        // Check columns for a winning sequence
+        let n = self.board[0].len();
+        for col_idx in 0..n {
+            let col_str: String = self.board.iter().map(|row| row[col_idx]).collect();
+            for sequence in sequences.clone() {
+                if col_str.contains(&sequence) {
+                    return true;
+                }
+            }
+        }
+
+        // Check all possible diagonals for a winning sequence
+        let diagonals = get_diagonal_strings(&self.board);
+
+        for diagonal in diagonals {
+            for sequence in sequences.clone() {
+                if diagonal.contains(&sequence) {
+                    return true;
+                }
+            }
+        }
+        // No winning sequence found
+        false
     }
 }
 
@@ -161,55 +210,17 @@ fn get_diagonal_strings(matrix: &[Vec<char>]) -> Vec<String> {
     diagonals
 }
 
-fn is_win(board: &Vec<Vec<char>>, sequences: Vec<&str>) -> bool {
-
-    for row in board {
-        let row_str: String = row.into_iter().collect();
-        for sequence in sequences.clone() {
-            if row_str.contains(&sequence) {
-                return true;
-            }
-        }
-    }
-
-    // Check columns for a winning sequence
-    let n = board[0].len();
-    for col_idx in 0..n {
-        let col_str: String = board.iter().map(|row| row[col_idx]).collect();
-        for sequence in sequences.clone() {
-            if col_str.contains(&sequence) {
-                return true;
-            }
-        }
-    }
-
-    // Check all possible diagonals for a winning sequence
-    let diagonals = get_diagonal_strings(&board);
-
-    for diagonal in diagonals {
-        for sequence in sequences.clone() {
-            if diagonal.contains(&sequence) {
-                return true;
-            }
-        }
-    }
-    // No winning sequence found
-    false
-}
-
 impl Component for Game {
     type Message = Msg;
     type Properties = Props;
     fn create(_ctx: &Context<Self>) -> Self {
-        
         let props = _ctx.props().clone();
         Self {
-            //link,
             board: vec![
                 vec!['_'; props.num_cols.try_into().unwrap()];
                 props.num_rows.try_into().unwrap()
             ],
-            turn: true,
+            user_turn: true,
             player1: props.player1.clone(),
             player2: props.player2.clone(),
             game_type: props.game_type.clone(),
@@ -218,6 +229,7 @@ impl Component for Game {
             done: false,
         }
     }
+
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::Reset => {
@@ -225,131 +237,78 @@ impl Component for Game {
                     vec!['_'; self.num_cols.try_into().unwrap()];
                     self.num_rows.try_into().unwrap()
                 ];
-                self.turn = true;
                 self.done = false;
+
                 true
             }
             Msg::UserMove { col } => {
-                let row = self.get_first_empty_row(col);
-                let mut sequences = Vec::new();
-                match self.game_type {
-                    GameType::Connect4 => {
-                        if self.board[row as usize][col as usize] != '_' {
-                            return false;
-                        }
-                        if self.turn {
-                            self.board[row as usize][col as usize] = 'R';
-                            //add to vector of 4 R's in a row
-                            sequences.push("RRRR");
-                        } else {
-                            // still the computer's turn
-                            return false;
-                            
-                        }
-                    }
-                    GameType::TootAndOtto => {
-                        if self.board[row as usize][col as usize] != '_' {
-                            return false;
-                        }
-                        if self.turn {
-                            self.board[row as usize][col as usize] = 'O';
-                        } else {
-                            // still the computer's turn
-                            return false;
-                        }
-                        sequences.push("OTTO");
-                        sequences.push("TOOT");
-                    }
-                }
+                self.perform_move(
+                    col,
+                    match self.game_type {
+                        GameType::Connect4 => 'R',
+                        GameType::TootAndOtto => 'T',
+                    },
+                );
 
-                if is_win(&self.board, sequences) {
-                    println!(
-                        "{} wins!",
-                        if self.turn {
-                            &self.player2
-                        } else {
-                            &self.player1
-                        }
-                    );
+                if self.is_win() {
                     self.done = true;
                 }
-                self.turn = !self.turn;
+
+                self.user_turn = !self.user_turn;
+
                 true
             }
-            Msg::ComputerMove {col } => {
-                let mut sequences = Vec::new();
-                match self.game_type {
-                    GameType::Connect4 => {
-                        let row = self.get_first_empty_row(col as usize);
-                        if self.board[row as usize][col as usize] != '_' {
-                            return false;
-                        }
-                        if self.turn {
-                            // still the user's turn
-                            return false;
-                        } else {
-                            self.board[row as usize][col as usize] = 'Y';
-                            sequences.push("YYYY");
-                        }
-                    }
-                    GameType::TootAndOtto => {
-                        let row = self.get_first_empty_row(col as usize);
-                        if self.board[row as usize][col as usize] != '_' {
-                            return false;
-                        }
-                        if self.turn {
-                            // still the user's turn
-                            return false;
-                        } else {
-                            self.board[row as usize][col as usize] = 'T';
-                        }
-                        sequences.push("OTTO");
-                        sequences.push("TOOT");
-                    }
-                }
+            Msg::ComputerMove { col } => {
+                self.perform_move(
+                    col,
+                    match self.game_type {
+                        GameType::Connect4 => 'B',
+                        GameType::TootAndOtto => 'O',
+                    },
+                );
 
-                if is_win(&self.board, sequences) {
+                if self.is_win() {
                     self.done = true;
                 }
-                self.turn = !self.turn;
+
+                self.user_turn = !self.user_turn;
                 true
             }
         }
     }
+
     fn view(&self, ctx: &Context<Self>) -> Html {
         let link = ctx.link();
         let mut board = vec![];
+
         for i in 0..self.num_cols {
-            let onclick = link.callback(move |_| {
-                log!("Clicked column {}", i);
-                return Msg::UserMove { col: i as usize }
-            });
-            
+            let onclick = link.callback(move |_| return Msg::UserMove { col: i as usize });
+
             let col: Vec<char> = self.board.iter().map(|row| row[i as usize]).collect();
             board.push(html! {
                 <button disabled={self.done} class="column" onclick={onclick}>
-                
-                    { for col.iter().map(|item| html! { 
+
+                    { for col.iter().map(|item| html! {
                         match item {
                             'R' => html! { <div class="circle bounce" style="background-color: #ED5A8B;"></div> },
-                            'Y' => html! { <div class="circle bounce" style="background-color: #6F8FEA;text-align: center;"></div> },
+                            'B' => html! { <div class="circle bounce" style="background-color: #6F8FEA;text-align: center;"></div> },
                             'T'|'O' => html! { <div class="circle bounce" style="background-color: #FFFFFF;">{item}</div> },
                             _ => html! { <div class="circle"></div> },
                         }
-                    
-                    }) 
+
+                    })
                     }
                 </button>
             });
         }
         let subtitle = if self.done {
-            if self.turn {
-                format!("{} wins!", self.player2)
-            } else {
+            if self.user_turn {
                 format!("{} wins!", self.player1)
+            } else {
+                format!("{} wins!", self.player2)
             }
         } else {
-            if self.turn {
+            if self.user_turn {
                 format!("{}'s turn", self.player1)
             } else {
                 format!("{}'s turn", self.player2)
@@ -358,10 +317,9 @@ impl Component for Game {
 
         let title = match self.game_type {
             GameType::Connect4 => "Connect 4",
-            GameType::TootAndOtto => "Toot & Otto",            
+            GameType::TootAndOtto => "Toot & Otto",
         };
 
-        
         html! {
             <div class="game-container">
             <h1 class="title">{ title }</h1>
@@ -371,18 +329,23 @@ impl Component for Game {
         </div>
         }
     }
-    fn rendered(&mut self, ctx: &Context<Self>, first_render: bool) {
-        
-        if !self.turn && !first_render && !self.done{
-            let col = self.alpha_beta_minmax(self.turn, 5, MIN, MAX).1;
-            log!("Computer move: {}", col);
+
+    fn rendered(&mut self, ctx: &Context<Self>, _: bool) {
+        if !self.user_turn && !self.done {
+            let player = match self.game_type {
+                GameType::Connect4 => 'B',
+                GameType::TootAndOtto => 'O',
+            };
+
+            let (_, col) = self.alpha_beta_minmax(player, 5, i32::MIN, i32::MAX);
+
             let msg = Msg::ComputerMove { col };
 
             let link = ctx.link().clone();
             Timeout::new(500, move || {
                 link.send_message(msg);
-            }).forget();
-            
+            })
+            .forget();
         }
     }
 }
@@ -390,12 +353,12 @@ impl Component for Game {
 #[function_component]
 pub fn Connect4() -> Html {
     html! {
-        <Game player1={"Muneer".to_string()} player2={"Ismail".to_string()} game_type={GameType::Connect4} num_rows={7} num_cols={6} />
+        <Game player1={"Ali".to_string()} player2={"AI - Medium".to_string()} game_type={GameType::Connect4}  />
     }
 }
 #[function_component]
 pub fn TootOtto() -> Html {
     html! {
-        <Game player1={"Muneer".to_string()} player2={"Ismail".to_string()} game_type={GameType::TootAndOtto} num_rows={7} num_cols={6} />
+        <Game player1={"Rupin".to_string()} player2={"AI - Medium".to_string()} game_type={GameType::TootAndOtto} />
     }
 }
