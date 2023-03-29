@@ -1,7 +1,5 @@
 use client::Leaderboard;
 use gloo_net::http::Request;
-use log::info;
-use wasm_bindgen::JsValue;
 use yew::prelude::*;
 
 // #[derive(Clone, PartialEq, Properties)]
@@ -12,45 +10,52 @@ use yew::prelude::*;
 
 #[function_component]
 pub fn LeaderBoard() -> Html {
-
     let to_users = use_state(|| vec![]);
     {
         let to_users = to_users.clone();
-        use_effect_with_deps(move |_| {
-            let to_users = to_users.clone();
-            wasm_bindgen_futures::spawn_local(async move {
-                let fetched_to_users: Vec<Leaderboard> = Request::get("http://127.0.0.1:8000/leaderboard/tootandotto")
-                    .send()
-                    .await
-                    .unwrap()
-                    .json()
-                    .await
-                    .unwrap();
+        use_effect_with_deps(
+            move |_| {
+                let to_users = to_users.clone();
+                wasm_bindgen_futures::spawn_local(async move {
+                    let fetched_to_users: Vec<Leaderboard> =
+                        Request::get("http://127.0.0.1:8000/leaderboard/tootandotto")
+                            .send()
+                            .await
+                            .unwrap()
+                            .json()
+                            .await
+                            .unwrap();
 
                     to_users.set(fetched_to_users);
-            });
-            || ()
-        }, ());
+                });
+                || ()
+            },
+            (),
+        );
     }
 
     let c4_users = use_state(|| vec![]);
     {
         let c4_users = c4_users.clone();
-        use_effect_with_deps(move |_| {
-            let c4_users = c4_users.clone();
-            wasm_bindgen_futures::spawn_local(async move {
-                let fetched_c4_users: Vec<Leaderboard> = Request::get("http://127.0.0.1:8000/leaderboard/connect4")
-                    .send()
-                    .await
-                    .unwrap()
-                    .json()
-                    .await
-                    .unwrap();
+        use_effect_with_deps(
+            move |_| {
+                let c4_users = c4_users.clone();
+                wasm_bindgen_futures::spawn_local(async move {
+                    let fetched_c4_users: Vec<Leaderboard> =
+                        Request::get("http://127.0.0.1:8000/leaderboard/connect4")
+                            .send()
+                            .await
+                            .unwrap()
+                            .json()
+                            .await
+                            .unwrap();
 
                     c4_users.set(fetched_c4_users);
-            });
-            || ()
-        }, ());
+                });
+                || ()
+            },
+            (),
+        );
     }
 
     let to_user_col: Vec<Leaderboard> = to_users.iter().map(|user| user.clone()).collect();
@@ -85,7 +90,7 @@ pub fn LeaderBoard() -> Html {
                         }
                     </tbody>
                 </table>
-                
+
             </div>
             <p>{"Connect 4"}</p>
             <div>
@@ -113,7 +118,7 @@ pub fn LeaderBoard() -> Html {
                         }
                     </tbody>
                 </table>
-                
+
             </div>
         </>
     }
