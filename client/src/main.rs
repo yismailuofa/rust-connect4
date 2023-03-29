@@ -36,8 +36,8 @@ pub enum LoginRoute {
 
 #[function_component()]
 fn App() -> Html {
-    // let username = use_state(|| Option::<String>::None);
-    let username = use_state(|| Option::<String>::Some("rupin".to_string()));
+    let username = use_state(|| Option::<String>::None);
+    // let username = use_state(|| Option::<String>::Some("rupin".to_string()));
 
     let user_clone = username.clone();
     let update_username = Callback::from(move |new_user: Option<String>| user_clone.set(new_user));
@@ -64,7 +64,7 @@ fn App() -> Html {
     }
 }
 
-fn switch_main(on_login: Callback<Option<String>>) -> impl Fn(MainRoute) -> Html {
+fn switch_main(set_user: Callback<Option<String>>) -> impl Fn(MainRoute) -> Html {
     move |routes: MainRoute| match routes {
         MainRoute::Connect4 => {
             html! { <div class="game-container">
@@ -88,7 +88,7 @@ fn switch_main(on_login: Callback<Option<String>>) -> impl Fn(MainRoute) -> Html
             html! { "Page not found." }
         }
         MainRoute::Logout => {
-            on_login.emit(None);
+            set_user.emit(None);
 
             html! {<Redirect<LoginRoute> to={LoginRoute::Login}/>}
         }
@@ -101,7 +101,7 @@ fn switch_login(on_login: Callback<Option<String>>) -> impl Fn(LoginRoute) -> Ht
             html! { <LoginForm set_username={on_login.clone()} /> }
         }
         LoginRoute::Register => {
-            html! { <RegisterForm /> }
+            html! { <RegisterForm set_username={on_login.clone()}/> }
         }
         LoginRoute::NotFound => {
             html! { "Page not found." }
