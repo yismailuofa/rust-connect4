@@ -108,61 +108,19 @@ async fn register(db: Connection<Db>, user_payload: Json<User>) -> Result<(), St
 #[get("/connect4")]
 async fn connect4_leaderboard(db: Connection<Db>) -> Result<Json<Vec<Leaderboard>>, Status> {
     // Returns the top users grouped by their games
-    let collection: Collection<ConnectGame> = db.database("mongodb_main").collection("games");
-
-    let filter = doc! {"game_type": "Connect4"};
-    let mut cursor = collection
-        .find(filter, None)
-        .await
-        .map_err(|_| Status::InternalServerError)?;
-
-    let mut leaderboard = HashMap::new();
-
-    while let Some(game) = cursor
-        .try_next()
-        .await
-        .map_err(|_| Status::InternalServerError)?
-    {
-        let loser = if game.player1 == game.winner {
-            game.player2
-        } else {
-            game.player1
-        };
-
-        let mut entry = Leaderboard {
-            username: game.winner.clone(),
-            wins: 0,
-            losses: 0,
-        };
-
-        let winner = leaderboard.entry(game.winner).or_insert(entry);
-
-        winner.wins += 1;
-
-        entry = Leaderboard {
-            username: loser.clone(),
-            wins: 0,
-            losses: 0,
-        };
-
-        let loser = leaderboard.entry(loser).or_insert(entry);
-
-        loser.losses += 1;
-    }
-
-    let mut leaderboard: Vec<Leaderboard> = leaderboard.into_iter().map(|(_, v)| v).collect();
-
-    leaderboard.sort_by(|a, b| b.wins.cmp(&a.wins));
-
-    Ok(Json(leaderboard))
+    return fetch_leaderboard(db, "Connect4").await;
 }
 
 #[get("/tootandotto")]
 async fn toototto_leaderboard(db: Connection<Db>) -> Result<Json<Vec<Leaderboard>>, Status> {
-    // Returns the top users grouped by their games
+
+    return fetch_leaderboard(db, "TootAndOtto").await;
+}
+
+async fn fetch_leaderboard(db: Connection<Db>, game_type: &str) -> Result<Json<Vec<Leaderboard>>, Status> {
     let collection: Collection<ConnectGame> = db.database("mongodb_main").collection("games");
 
-    let filter = doc! {"game_type": "TootAndOtto"};
+    let filter = doc! {"game_type": game_type};
     let mut cursor = collection
         .find(filter, None)
         .await
