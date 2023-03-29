@@ -2,9 +2,9 @@ use client::User;
 use gloo_dialogs::alert;
 use gloo_net::http::Request;
 use yew::prelude::*;
-use yew_router::prelude::Link;
+use yew_router::prelude::{use_navigator, Link};
 
-use crate::LoginRoute;
+use crate::{LoginRoute, MainRoute};
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct Props {
@@ -21,11 +21,14 @@ pub fn LoginForm(props: &Props) -> Html {
 
     let props = props.clone();
 
+    let navigator = use_navigator().unwrap();
+
     let onclick = {
         let username_ref = username_ref.clone();
         let password_ref = password_ref.clone();
 
         move |_| {
+            let navigator = navigator.clone();
             let set_username = props.set_username.clone();
 
             let username = username_ref.cast::<web_sys::HtmlInputElement>();
@@ -82,6 +85,8 @@ pub fn LoginForm(props: &Props) -> Html {
                 }
 
                 set_username.emit(Some(username_value.to_string()));
+
+                navigator.push(&MainRoute::Connect4);
             });
         }
     };

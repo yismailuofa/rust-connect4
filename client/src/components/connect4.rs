@@ -45,7 +45,6 @@ impl Game {
         mut alpha: i32,
         mut beta: i32,
     ) -> (i32, usize, char) {
-
         let max_player = true; //true is user move (R in connect4)
 
         // let next_player = match player {
@@ -90,7 +89,7 @@ impl Game {
                 self.perform_move(m, c);
 
                 let (score, _, _) = self.alpha_beta_minmax(!player, depth - 1, alpha, beta);
-                
+
                 if player == max_player {
                     if score > best_score {
                         best_score = score;
@@ -301,8 +300,11 @@ impl Component for Game {
         let link = ctx.link();
         let mut board = vec![];
 
-        let disabled = self.winners.0 || self.winners.1 || !self.user_turn;
-        || ((self.game_type == GameType::TootAndOtto) && (self.user_otto_toot == "None"));
+        let disabled = self.winners.0
+            || self.winners.1
+            || !self.user_turn
+            || ((self.game_type == GameType::TootAndOtto) && (self.user_otto_toot == "None"));
+
         let choice = match self.game_type {
             GameType::Connect4 => 'R',
             GameType::TootAndOtto => {
@@ -419,7 +421,6 @@ impl Component for Game {
         }
 
         if !self.user_turn && !self.winners.0 && !self.winners.1 {
-
             let (_, col, choice) = self.alpha_beta_minmax(false, 5, i32::MIN, i32::MAX);
 
             let msg = Msg::ComputerMove { col, choice };
