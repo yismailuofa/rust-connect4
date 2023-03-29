@@ -208,3 +208,8 @@ body {
 .navbar {
   padding-bottom: 25px;
 }
+
+.disabled-board {
+  pointer-events: none;
+  opacity: 0.9;
+}

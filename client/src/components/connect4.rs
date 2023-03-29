@@ -281,12 +281,14 @@ impl Component for Game {
         let link = ctx.link();
         let mut board = vec![];
 
+        let disabled = self.done || !self.user_turn;
+
         for i in 0..self.num_cols {
             let onclick = link.callback(move |_| return Msg::UserMove { col: i as usize });
 
             let col: Vec<char> = self.board.iter().map(|row| row[i as usize]).collect();
             board.push(html! {
-                <button disabled={self.done} class="column" onclick={onclick}>
+                <button {disabled} class="column" onclick={onclick}>
 
                     { for col.iter().map(|item| html! {
                         match item {
@@ -320,11 +322,17 @@ impl Component for Game {
             GameType::TootAndOtto => "Toot & Otto",
         };
 
+        let mut board_classses = vec!["grid"];
+
+        if disabled {
+            board_classses.push("disabled-board");
+        }
+
         html! {
             <div class="game-container">
             <h1 class="title">{ title }</h1>
             <h2 class="subtitle">{ subtitle }</h2>
-            <div class="grid">{ board }</div>
+            <div class={classes!(board_classses)}>{ board }</div>
             <button class="restart" onclick={link.callback(|_| Msg::Reset)}>{"Restart"}</button>
         </div>
         }
