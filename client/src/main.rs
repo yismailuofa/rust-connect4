@@ -10,7 +10,7 @@ use crate::components::register_form::RegisterForm;
 
 #[derive(Routable, PartialEq, Eq, Clone, Debug)]
 pub enum MainRoute {
-    #[at("/")]
+    #[at("/connect4")]
     Connect4,
     #[at("/toot-otto")]
     TootOtto,
@@ -36,8 +36,8 @@ pub enum LoginRoute {
 
 #[function_component()]
 fn App() -> Html {
-    let username = use_state(|| Option::<String>::None);
-    // let username = use_state(|| Option::<String>::Some("rupin".to_string()));
+    //let username = use_state(|| Option::<String>::None);
+    let username = use_state(|| Option::<String>::Some("rupin".to_string()));
 
     let user_clone = username.clone();
     let update_username = Callback::from(move |new_user: Option<String>| user_clone.set(new_user));

@@ -90,7 +90,7 @@ impl Game {
                 self.perform_move(m, c);
 
                 let (score, _, _) = self.alpha_beta_minmax(!player, depth - 1, alpha, beta);
-
+                
                 if player == max_player {
                     if score > best_score {
                         best_score = score;
@@ -340,11 +340,9 @@ impl Component for Game {
         }
         let subtitle = if self.winners.0 || self.winners.1 {
             if self.winners.1 {
-                //format!("{} wins!", self.player2)
                 format!("{} wins!", self.player2)
             } else {
                 format!("{} wins!", self.player1)
-                //format!("{} wins!", self.player1)
             }
         } else {
             if self.user_turn {
