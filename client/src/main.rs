@@ -7,7 +7,6 @@ use crate::components::leaderboard::LeaderBoard;
 use crate::components::login_form::LoginForm;
 use crate::components::navbar::Navbar;
 use crate::components::register_form::RegisterForm;
-use client::User;
 
 #[derive(Routable, PartialEq, Eq, Clone, Debug)]
 pub enum MainRoute {
@@ -37,22 +36,15 @@ pub enum LoginRoute {
 
 #[function_component()]
 fn App() -> Html {
-    let user = use_state(|| {
-        Option::<User>::Some({
-            User {
-                username: "test".to_string(),
-                password: "test".to_string(),
-            }
-        })
-    });
+    let username = use_state(|| Option::<String>::None);
 
-    let user_clone = user.clone();
-    let update_user = Callback::from(move |new_user: Option<User>| user_clone.set(new_user));
+    let user_clone = username.clone();
+    let update_username = Callback::from(move |new_user: Option<String>| user_clone.set(new_user));
 
     html! {
         <BrowserRouter>
             {
-                if let Some(_) = &*user {
+                if let Some(_) = &*username {
                     html! {
                         <>
                             <Navbar/>
@@ -62,7 +54,7 @@ fn App() -> Html {
                 } else {
                     html! {
                         <>
-                            <Switch<LoginRoute> render={switch_login(update_user)} />
+                            <Switch<LoginRoute> render={switch_login(update_username)} />
                         </>
                     }
                 }
@@ -98,10 +90,10 @@ fn switch_main(routes: MainRoute) -> Html {
     }
 }
 
-fn switch_login(on_login: Callback<Option<User>>) -> impl Fn(LoginRoute) -> Html {
+fn switch_login(on_login: Callback<Option<String>>) -> impl Fn(LoginRoute) -> Html {
     move |routes: LoginRoute| match routes {
         LoginRoute::Login => {
-            html! { <LoginForm set_user={on_login.clone()} /> }
+            html! { <LoginForm set_username={on_login.clone()} /> }
         }
         LoginRoute::Register => {
             html! { <RegisterForm /> }
