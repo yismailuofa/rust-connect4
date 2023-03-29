@@ -2,6 +2,7 @@ use client::GameType;
 
 use gloo_timers::callback::Timeout;
 use js_sys::Math;
+use log::info;
 use yew::prelude::*;
 
 pub struct Game {
@@ -14,15 +15,16 @@ pub struct Game {
     user_turn: bool,
     winners: (bool, bool),
     user_otto_toot: String,
+    t_selected: bool,
 }
 
 pub enum Msg {
-    UserMove { col: usize },
-    ComputerMove { col: usize },
+    UserMove { col: usize, choice: char },
+    ComputerMove { col: usize, choice: char },
     Reset,
     RenderAgain,
+    ChangeSel,
 }
-
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
@@ -38,32 +40,42 @@ pub struct Props {
 impl Game {
     fn alpha_beta_minmax(
         &mut self,
-        player: char,
+        player: bool,
         depth: i32,
         mut alpha: i32,
         mut beta: i32,
-    ) -> (i32, usize) {
-        let max_player = match self.game_type {
-            GameType::Connect4 => 'R',
-            GameType::TootAndOtto => 'O',
+    ) -> (i32, usize, char) {
+
+        let max_player = true; //true is user move (R in connect4)
+
+        // let next_player = match player {
+        //     'R' => 'B',
+        //     'B' => 'R',
+        //     'T' => 'O',
+        //     'O' => 'T',
+        //     _ => panic!("Invalid player!"),
+        // };
+        let options = match self.game_type {
+            GameType::Connect4 => {
+                if player {
+                    "R"
+                } else {
+                    "B"
+                }
+            }
+            GameType::TootAndOtto => "OT",
         };
 
-        let next_player = match player {
-            'R' => 'B',
-            'B' => 'R',
-            'T' => 'O',
-            'O' => 'T',
-            _ => panic!("Invalid player!"),
-        };
+        // first element in winners array is user win, second is computer win
         let winners = self.is_win();
-        if (winners.0 || winners.1) && (winners.0!=winners.1) { 
-            if player == max_player {
-                return (-1, 0); // Min player won
+        if (winners.0 || winners.1) && (winners.0 != winners.1) {
+            if winners.1 {
+                return (-1, 0, '_'); // Min player won (computer)
             } else {
-                return (1, 0); // Max player won
+                return (1, 0, '_'); // Max player won
             }
         } else if self.is_draw() || depth == 0 || (winners.0 && winners.1) {
-            return (0, 0);
+            return (0, 0, '_');
         }
 
         let mut best_score = if player == max_player {
@@ -72,41 +84,44 @@ impl Game {
             i32::MAX
         };
         let mut best_move = 0;
-
+        let mut best_choice = '_';
         for m in self.get_valid_moves() {
-            self.perform_move(m, player);
+            for c in options.chars() {
+                self.perform_move(m, c);
 
-            let (score, _) = self.alpha_beta_minmax(next_player, depth - 1, alpha, beta);
+                let (score, _, _) = self.alpha_beta_minmax(!player, depth - 1, alpha, beta);
 
-            if player == max_player {
-                if score > best_score {
-                    best_score = score;
-                    best_move = m;
-                }
+                if player == max_player {
+                    if score > best_score {
+                        best_score = score;
+                        best_move = m;
+                        best_choice = c;
+                    }
 
-                if beta <= best_score {
-                    self.undo_move(m);
-                    return (best_score, best_move);
+                    if beta <= best_score {
+                        self.undo_move(m);
+                        return (best_score, best_move, best_choice);
+                    }
+                    alpha = std::cmp::max(alpha, best_score);
+                } else {
+                    if score < best_score {
+                        best_score = score;
+                        best_move = m;
+                        best_choice = c;
+                    }
+                    if alpha >= best_score {
+                        self.undo_move(m);
+                        return (best_score, best_move, best_choice);
+                    }
+                    beta = std::cmp::min(beta, best_score);
                 }
-                alpha = std::cmp::max(alpha, best_score);
-            } else {
-                if score < best_score {
-                    best_score = score;
-                    best_move = m;
-                }
-                if alpha >= best_score {
-                    self.undo_move(m);
-                    return (best_score, best_move);
-                }
-                beta = std::cmp::min(beta, best_score);
+                self.undo_move(m);
             }
-            self.undo_move(m);
         }
-        return (best_score, best_move);
+        return (best_score, best_move, best_choice);
     }
 
     fn is_draw(&self) -> bool {
-
         self.get_valid_moves().len() == 0
     }
 
@@ -176,7 +191,15 @@ impl Game {
             }
         }
         // No winning sequence found
-        (res[0], res[1])
+        match self.game_type {
+            GameType::TootAndOtto if self.user_otto_toot.as_str() == "TOOT" => {
+                return (res[1], res[0])
+            }
+            _ => return (res[0], res[1]),
+        }
+
+        // }
+        // (res[0], res[1])
     }
 }
 
@@ -234,7 +257,7 @@ impl Component for Game {
             num_cols: props.num_cols,
             winners: (false, false),
             user_otto_toot: "None".to_string(),
-
+            t_selected: false,
         }
     }
 
@@ -249,35 +272,28 @@ impl Component for Game {
 
                 true
             }
-            Msg::UserMove { col } => {
-                self.perform_move(
-                    col,
-                    match self.game_type {
-                        GameType::Connect4 => 'R',
-                        GameType::TootAndOtto => 'T',
-                    },
-                );
+            Msg::UserMove { col, choice } => {
+                self.perform_move(col, choice);
                 self.winners = self.is_win();
-                
 
                 self.user_turn = !self.user_turn;
 
                 true
             }
-            Msg::ComputerMove { col } => {
-                self.perform_move(
-                    col,
-                    match self.game_type {
-                        GameType::Connect4 => 'B',
-                        GameType::TootAndOtto => 'O',
-                    },
-                );
+            Msg::ComputerMove { col, choice } => {
+                self.perform_move(col, choice);
                 self.winners = self.is_win();
 
                 self.user_turn = !self.user_turn;
                 true
             }
             Msg::RenderAgain => true,
+            Msg::ChangeSel => {
+                wasm_logger::init(wasm_logger::Config::default());
+                self.t_selected = !self.t_selected;
+                info!("T selected: {}", self.t_selected);
+                true
+            }
         }
     }
 
@@ -285,10 +301,25 @@ impl Component for Game {
         let link = ctx.link();
         let mut board = vec![];
 
-        let disabled = self.winners.0 ||self.winners.1 || !self.user_turn;
-
+        let disabled = self.winners.0 || self.winners.1 || !self.user_turn;
+        || ((self.game_type == GameType::TootAndOtto) && (self.user_otto_toot == "None"));
+        let choice = match self.game_type {
+            GameType::Connect4 => 'R',
+            GameType::TootAndOtto => {
+                if self.t_selected {
+                    'T'
+                } else {
+                    'O'
+                }
+            }
+        };
         for i in 0..self.num_cols {
-            let onclick = link.callback(move |_| return Msg::UserMove { col: i as usize });
+            let onclick = link.callback(move |_| {
+                return Msg::UserMove {
+                    col: i as usize,
+                    choice,
+                };
+            });
 
             let col: Vec<char> = self.board.iter().map(|row| row[i as usize]).collect();
             board.push(html! {
@@ -307,20 +338,12 @@ impl Component for Game {
                 </button>
             });
         }
-        let subtitle = if self.winners.0 || self.winners.1{
+        let subtitle = if self.winners.0 || self.winners.1 {
             if self.winners.1 {
                 //format!("{} wins!", self.player2)
-                match self.game_type {
-                    // flip the winner if the user is TOOT
-                    GameType::TootAndOtto if self.user_otto_toot.as_str()=="TOOT"=> format!("{} wins!", self.player1),
-                    _ => format!("{} wins!", self.player2),
-                }
+                format!("{} wins!", self.player2)
             } else {
-                match self.game_type {
-                    // flip the winner if the user is TOOT
-                    GameType::TootAndOtto if self.user_otto_toot.as_str()=="TOOT"=> format!("{} wins!", self.player2),
-                    _ => format!("{} wins!", self.player1),
-                }
+                format!("{} wins!", self.player1)
                 //format!("{} wins!", self.player1)
             }
         } else {
@@ -344,36 +367,41 @@ impl Component for Game {
 
         let toototto = match self.game_type {
             GameType::Connect4 => html! {},
-            GameType::TootAndOtto => {
-                match self.user_otto_toot.as_str() {
-                    "None" => html! {
-                        <div class="content">
-                            <div class="content__container">
-                            <p class="content__container__text">{"You are: "}</p>
-                            <ul class="content__container__list">
-                                <li class="content__container__list__item">{"TOOT"}</li>
-                                <li class="content__container__list__item">{"OTTO"}</li>
-                            </ul>
-                            </div>
+            GameType::TootAndOtto => match self.user_otto_toot.as_str() {
+                "None" => html! {
+                    <div class="content">
+                        <div class="content__container">
+                        <p class="content__container__text">{"You are: "}</p>
+                        <ul class="content__container__list">
+                            <li class="content__container__list__item">{"TOOT"}</li>
+                            <li class="content__container__list__item">{"OTTO"}</li>
+                        </ul>
                         </div>
-                    },
-                    
-                    _ => html! {
+                    </div>
+                },
+
+                _ => html! {
+                    <div>
                         <div class="content">
                             <div class="content__container">
                             <p class="content__container__text">{format!{"You are: {}", self.user_otto_toot.as_str()}}</p>
                             </div>
                         </div>
-                    }
-                }
+                        <div style="display: flex; flex-direction: row; justify-content: center;">
+                            <button onclick={ctx.link().callback(|_| Msg::ChangeSel)} disabled={self.t_selected} class="circle button" style="background-color: #FFFFFF;">{"T"}</button>
+                            <button onclick={ctx.link().callback(|_| Msg::ChangeSel)} disabled={!self.t_selected} class="circle button" style="background-color: #FFFFFF;">{"O"}</button>
+                        </div>
+                    </div>
+
+                },
             },
         };
-        
-        
+
         html! {
             <div class="game-container">
             <h1 class="title">{ title }</h1>
             { toototto}
+
             <h2 class="subtitle">{ subtitle }</h2>
             <div class={classes!(board_classses)}>{ board }</div>
             <button class="restart" onclick={link.callback(|_| Msg::Reset)}>{"Restart"}</button>
@@ -382,8 +410,7 @@ impl Component for Game {
     }
 
     fn rendered(&mut self, ctx: &Context<Self>, first_render: bool) {
-        
-        if first_render && self.game_type == GameType::TootAndOtto{
+        if first_render && self.game_type == GameType::TootAndOtto {
             let options = vec!["TOOT", "OTTO"];
             self.user_otto_toot = options[if Math::random() < 0.5 { 0 } else { 1 }].to_string();
             let link = ctx.link().clone();
@@ -394,14 +421,10 @@ impl Component for Game {
         }
 
         if !self.user_turn && !self.winners.0 && !self.winners.1 {
-            let player = match self.game_type {
-                GameType::Connect4 => 'B',
-                GameType::TootAndOtto => 'O',
-            };
 
-            let (_, col) = self.alpha_beta_minmax(player, 5, i32::MIN, i32::MAX);
+            let (_, col, choice) = self.alpha_beta_minmax(false, 5, i32::MIN, i32::MAX);
 
-            let msg = Msg::ComputerMove { col };
+            let msg = Msg::ComputerMove { col, choice };
 
             let link = ctx.link().clone();
             Timeout::new(500, move || {

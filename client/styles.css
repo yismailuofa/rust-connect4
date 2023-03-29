@@ -9,6 +9,17 @@ body {
   box-sizing: border-box;
 }
 
+.button {
+  background-color: #ffffff;
+  border: none;
+  opacity: 0.5;
+}
+.button:disabled {
+  background-color: #ffffff;
+  border: none;
+  opacity: 1;
+}
+
 .logo {
   text-transform: uppercase;
   font-weight: 200;
