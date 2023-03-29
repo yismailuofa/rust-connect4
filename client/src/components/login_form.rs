@@ -8,11 +8,11 @@ pub struct Props {
 
 #[function_component]
 pub fn LoginForm(props: &Props) -> Html {
-    let username_ref = use_node_ref();
-    let password_ref = use_node_ref();
+    // let username_ref = use_node_ref();
+    // let password_ref = use_node_ref();
 
-    let username_value = use_state(|| "".to_string());
-    let password_value = use_state(|| "".to_string());
+    // let username_value = use_state(|| "".to_string());
+    // let password_value = use_state(|| "".to_string());
 
     let props = props.clone();
 

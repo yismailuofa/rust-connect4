@@ -3,10 +3,10 @@ use yew_router::prelude::*;
 
 mod components;
 use crate::components::connect4::{Connect4, TootOtto};
+use crate::components::leaderboard::LeaderBoard;
 use crate::components::login_form::LoginForm;
 use crate::components::navbar::Navbar;
 use crate::components::register_form::RegisterForm;
-use crate::components::leaderboard::LeaderBoard;
 use client::User;
 
 #[derive(Routable, PartialEq, Eq, Clone, Debug)]
@@ -37,12 +37,14 @@ pub enum LoginRoute {
 
 #[function_component()]
 fn App() -> Html {
-    let user = use_state(|| Option::<User>::Some({
-        User {
-            username: "test".to_string(),
-            password: "test".to_string(),
-        }
-    }));
+    let user = use_state(|| {
+        Option::<User>::Some({
+            User {
+                username: "test".to_string(),
+                password: "test".to_string(),
+            }
+        })
+    });
 
     let user_clone = user.clone();
     let update_user = Callback::from(move |new_user: Option<User>| user_clone.set(new_user));
@@ -85,10 +87,10 @@ fn switch_main(routes: MainRoute) -> Html {
         }
         MainRoute::Leaderboard => {
             html! { <div class="game-container">
-                        <LeaderBoard />
-                    </div>
-                }
-        },
+                    <LeaderBoard />
+                </div>
+            }
+        }
         MainRoute::NotFound => {
             html! { "Page not found." }
         }
