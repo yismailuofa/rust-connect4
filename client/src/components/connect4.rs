@@ -303,9 +303,9 @@ impl Component for Game {
         }
         let subtitle = if self.done {
             if self.user_turn {
-                format!("{} wins!", self.player1)
-            } else {
                 format!("{} wins!", self.player2)
+            } else {
+                format!("{} wins!", self.player1)
             }
         } else {
             if self.user_turn {
