@@ -19,7 +19,7 @@ pub fn LeaderBoard() -> Html {
         use_effect_with_deps(move |_| {
             let users = users.clone();
             wasm_bindgen_futures::spawn_local(async move {
-                let fetched_users: Vec<Leaderboard> = Request::get("//api/leaderboard")
+                let fetched_users: Vec<Leaderboard> = Request::get("http://127.0.0.1:8000/leaderboard")
                     .send()
                     .await
                     .unwrap()
@@ -33,8 +33,8 @@ pub fn LeaderBoard() -> Html {
         }, ());
     }
 
-    // let user_col: Vec<Leaderboard> = users.iter().map(|user| user.clone()).collect();
-    // let size = users.len();
+    let user_col: Vec<Leaderboard> = users.iter().map(|user| user.clone()).collect();
+    let size = users.len();
 
     html! {
         <>
@@ -44,6 +44,7 @@ pub fn LeaderBoard() -> Html {
                 <table>
                     <thead>
                         <tr>
+                            <th>{"Rank"}</th>
                             <th>{"Username"}</th>
                             <th>{"Wins"}</th>
                             <th>{"Losses"}</th>
@@ -51,16 +52,16 @@ pub fn LeaderBoard() -> Html {
                     </thead>
                     <tbody>
                         {
-                            // for user_col.iter().map(|user| {
-                            //     html! {
-                            //         <tr>
-                            //             <td>{&user.username}</td>
-                            //             <td>{&user.wins}</td>
-                            //             <td>{&user.losses}</td>
-                            //         </tr>
-                            //     }
-                            // })
-                            "todo"
+                            for user_col.iter().enumerate().map(|(i, user)| {
+                                html! {
+                                    <tr>
+                                        <td>{i+1}</td>
+                                        <td>{&user.username}</td>
+                                        <td>{&user.wins}</td>
+                                        <td>{&user.losses}</td>
+                                    </tr>
+                                }
+                            })
                         }
                     </tbody>
                 </table>
