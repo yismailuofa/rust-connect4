@@ -1,5 +1,6 @@
 use std::i32::{MIN, MAX};
 
+use client::GameType;
 use gloo_timers::callback::Timeout;
 use yew::*;
 use gloo_console::log;
@@ -9,7 +10,7 @@ pub struct Game {
     turn: bool,
     player1: String,
     player2: String,
-    game_type: String,
+    game_type: GameType,
     num_rows: i32,
     num_cols: i32,
     done: bool,
@@ -25,7 +26,7 @@ pub enum Msg {
 pub struct Props {
     pub player1: String,
     pub player2: String,
-    pub game_type: String,
+    pub game_type: GameType,
     pub num_rows: i32,
     pub num_cols: i32,
 }
@@ -33,10 +34,9 @@ pub struct Props {
 impl Game {
     fn alpha_beta_minmax(&mut self, player:bool, depth: i32, mut alpha: i32, mut beta: i32) -> (i32, usize) {
         // make next_player an empty hashmap
-        let sequences = match self.game_type.as_str() {
-            "connect4" => if player {vec!["RRRR"]} else {vec!["YYYY"]},
-            "otto" => vec!["OTTO", "TOOT"],
-            _ => vec!["XXXX"],
+        let sequences = match self.game_type {
+            GameType::Connect4 => if player {vec!["RRRR"]} else {vec!["YYYY"]},
+            GameType::TootAndOtto => vec!["OTTO", "TOOT"]
         };
             
         if is_win(&self.board, sequences) {
@@ -232,8 +232,8 @@ impl Component for Game {
             Msg::UserMove { col } => {
                 let row = self.get_first_empty_row(col);
                 let mut sequences = Vec::new();
-                match self.game_type.as_str() {
-                    "connect4" => {
+                match self.game_type {
+                    GameType::Connect4 => {
                         if self.board[row as usize][col as usize] != '_' {
                             return false;
                         }
@@ -247,7 +247,7 @@ impl Component for Game {
                             
                         }
                     }
-                    "otto" => {
+                    GameType::TootAndOtto => {
                         if self.board[row as usize][col as usize] != '_' {
                             return false;
                         }
@@ -260,7 +260,6 @@ impl Component for Game {
                         sequences.push("OTTO");
                         sequences.push("TOOT");
                     }
-                    _ => {}
                 }
 
                 if is_win(&self.board, sequences) {
@@ -277,17 +276,10 @@ impl Component for Game {
                 self.turn = !self.turn;
                 true
             }
-            Msg::ComputerMove {col: _col } => {
+            Msg::ComputerMove {col } => {
                 let mut sequences = Vec::new();
-                match self.game_type.as_str() {
-                    "connect4" => {
-                        let mut col = 0;
-                        for i in 0..self.num_cols {
-                            if self.board[0 as usize][i as usize] == '_' {
-                                col = i;
-                                break;
-                            }
-                        }
+                match self.game_type {
+                    GameType::Connect4 => {
                         let row = self.get_first_empty_row(col as usize);
                         if self.board[row as usize][col as usize] != '_' {
                             return false;
@@ -300,14 +292,7 @@ impl Component for Game {
                             sequences.push("YYYY");
                         }
                     }
-                    "otto" => {
-                        let mut col = 0;
-                        for i in 0..self.num_cols {
-                            if self.board[0 as usize][i as usize] == '_' {
-                                col = i;
-                                break;
-                            }
-                        }
+                    GameType::TootAndOtto => {
                         let row = self.get_first_empty_row(col as usize);
                         if self.board[row as usize][col as usize] != '_' {
                             return false;
@@ -321,7 +306,6 @@ impl Component for Game {
                         sequences.push("OTTO");
                         sequences.push("TOOT");
                     }
-                    _ => {}
                 }
 
                 if is_win(&self.board, sequences) {
@@ -372,10 +356,9 @@ impl Component for Game {
             }
         };
 
-        let title = if self.game_type == "connect4" {
-            "Connect 4"
-        } else {
-            "Toot & Otto"
+        let title = match self.game_type {
+            GameType::Connect4 => "Connect 4",
+            GameType::TootAndOtto => "Toot & Otto",            
         };
 
         
@@ -392,6 +375,7 @@ impl Component for Game {
         
         if !self.turn && !first_render && !self.done{
             let col = self.alpha_beta_minmax(self.turn, 5, MIN, MAX).1;
+            log!("Computer move: {}", col);
             let msg = Msg::ComputerMove { col };
 
             let link = ctx.link().clone();
@@ -406,12 +390,12 @@ impl Component for Game {
 #[function_component]
 pub fn Connect4() -> Html {
     html! {
-        <Game player1={"Muneer".to_string()} player2={"Ismail".to_string()} game_type={"connect4".to_string()} num_rows={8} num_cols={6} />
+        <Game player1={"Muneer".to_string()} player2={"Ismail".to_string()} game_type={GameType::Connect4} num_rows={7} num_cols={6} />
     }
 }
 #[function_component]
 pub fn TootOtto() -> Html {
     html! {
-        <Game player1={"Muneer".to_string()} player2={"Ismail".to_string()} game_type={"otto".to_string()} num_rows={6} num_cols={6} />
+        <Game player1={"Muneer".to_string()} player2={"Ismail".to_string()} game_type={GameType::TootAndOtto} num_rows={7} num_cols={6} />
     }
 }
