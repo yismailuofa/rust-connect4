@@ -52,8 +52,11 @@ pub fn LoginForm(props: &Props) -> Html {
                 return;
             }
 
-            let username_value = username_value.clone();
-            let password_value = password_value.clone();
+            let username = username_ref.cast::<web_sys::HtmlInputElement>();
+            let username_value = username.unwrap().value();
+
+            let password = password_ref.cast::<web_sys::HtmlInputElement>();
+            let password_value = password.unwrap().value();
 
             wasm_bindgen_futures::spawn_local(async move {
                 let user = User {
@@ -75,7 +78,6 @@ pub fn LoginForm(props: &Props) -> Html {
                     return;
                 }
 
-                let username_value = username_value.clone();
                 set_username.emit(Some(username_value.to_string()));
             });
         }

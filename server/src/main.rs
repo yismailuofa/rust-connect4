@@ -156,6 +156,11 @@ async fn leaderboard(db: Connection<Db>) -> Result<Json<Vec<Leaderboard>>, Statu
     Ok(Json(leaderboard))
 }
 
+#[options("/<_..>")]
+async fn options() -> Result<(), Status> {
+    Ok(())
+}
+
 pub struct CORS;
 
 #[rocket::async_trait]
@@ -188,5 +193,6 @@ fn rocket() -> _ {
         .mount("/games", routes![create_game, all_games])
         .mount("/users", routes![login, register])
         .mount("/leaderboard", routes![leaderboard])
+        .mount("/", routes![options])
         .attach(CORS)
 }
