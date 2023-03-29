@@ -1,9 +1,8 @@
-use yew::prelude::*;
-use gloo_net::http::Request;
 use client::Leaderboard;
+use gloo_net::http::Request;
 use log::info;
 use wasm_bindgen::JsValue;
-
+use yew::prelude::*;
 
 // #[derive(Clone, PartialEq, Properties)]
 // pub struct Props {
@@ -34,13 +33,13 @@ pub fn LeaderBoard() -> Html {
         }, ());
     }
 
-    let user_col: Vec<Leaderboard> = users.iter().map(|user| user.clone()).collect();
-    let size = users.len();
-    
+    // let user_col: Vec<Leaderboard> = users.iter().map(|user| user.clone()).collect();
+    // let size = users.len();
+
     html! {
         <>
             <h1>{"Leaderboard"}</h1>
-            <p>{format!("Top {} users", size)}</p>
+            <p>{format!("Top {} users", "todo")}</p>
             <div>
                 <table>
                     <thead>
@@ -52,15 +51,16 @@ pub fn LeaderBoard() -> Html {
                     </thead>
                     <tbody>
                         {
-                            for user_col.iter().map(|user| {
-                                html! {
-                                    <tr>
-                                        <td>{&user.username}</td>
-                                        <td>{&user.wins}</td>
-                                        <td>{&user.losses}</td>
-                                    </tr>
-                                }
-                            })
+                            // for user_col.iter().map(|user| {
+                            //     html! {
+                            //         <tr>
+                            //             <td>{&user.username}</td>
+                            //             <td>{&user.wins}</td>
+                            //             <td>{&user.losses}</td>
+                            //         </tr>
+                            //     }
+                            // })
+                            "todo"
                         }
                     </tbody>
                 </table>
