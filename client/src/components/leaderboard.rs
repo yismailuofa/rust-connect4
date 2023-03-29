@@ -1,6 +1,8 @@
 use yew::prelude::*;
 use gloo_net::http::Request;
 use client::Leaderboard;
+use log::info;
+use wasm_bindgen::JsValue;
 
 
 // #[derive(Clone, PartialEq, Properties)]
@@ -11,20 +13,32 @@ use client::Leaderboard;
 
 #[function_component]
 pub fn LeaderBoard() -> Html {
+    wasm_logger::init(wasm_logger::Config::default());
+    let obj = JsValue::from(0);
+    info!("Leaderboard: {:?}", obj);
+
     let users = use_state(|| vec![]);
     {
         let users = users.clone();
         use_effect_with_deps(move |_| {
             let users = users.clone();
             wasm_bindgen_futures::spawn_local(async move {
-                let fetched_users: Vec<Leaderboard> = Request::get("http://127.0.0.1:8000/leaderboard")
+                let fetched_users: Result<Vec<Leaderboard>> = Request::get("/127.0.0.1:8000/leaderboard")
                     .send()
                     .await
                     .unwrap()
                     .json()
-                    .await
-                    .unwrap();
-                users.set(fetched_users);
+                    .await;
+
+                match fetched_users {
+                    Ok(users) => {
+                        info!("Leaderboard: {:?}", users);
+                    }
+                    Err(e) => {
+                        info!("Leaderboard: {:?}", e);
+                    }
+                }
+                // users.set(fetched_users);
             });
             || ()
         }, ());

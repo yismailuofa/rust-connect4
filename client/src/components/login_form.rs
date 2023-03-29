@@ -35,7 +35,7 @@ pub fn LoginForm(props: &Props) -> Html {
             </div>
             <div>
                 <button type="submit" {onclick} >{"Login"}</button>
-            </div> -->
+            </div>
         </form>
     }
 }
