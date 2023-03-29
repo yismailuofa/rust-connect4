@@ -2,6 +2,9 @@ use client::User;
 use gloo_dialogs::alert;
 use gloo_net::http::Request;
 use yew::prelude::*;
+use yew_router::prelude::Link;
+
+use crate::LoginRoute;
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct Props {
@@ -96,6 +99,7 @@ pub fn LoginForm(props: &Props) -> Html {
             <div>
                 <button type="submit" {onclick} >{"Login"}</button>
             </div>
+            <Link<LoginRoute> to={LoginRoute::Register}>{ "Click here to register" }</Link<LoginRoute>>
         </>
     }
 }

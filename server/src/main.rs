@@ -107,17 +107,18 @@ async fn register(db: Connection<Db>, user_payload: Json<User>) -> Result<(), St
 
 #[get("/connect4")]
 async fn connect4_leaderboard(db: Connection<Db>) -> Result<Json<Vec<Leaderboard>>, Status> {
-    // Returns the top users grouped by their games
     return fetch_leaderboard(db, "Connect4").await;
 }
 
 #[get("/tootandotto")]
 async fn toototto_leaderboard(db: Connection<Db>) -> Result<Json<Vec<Leaderboard>>, Status> {
-
     return fetch_leaderboard(db, "TootAndOtto").await;
 }
 
-async fn fetch_leaderboard(db: Connection<Db>, game_type: &str) -> Result<Json<Vec<Leaderboard>>, Status> {
+async fn fetch_leaderboard(
+    db: Connection<Db>,
+    game_type: &str,
+) -> Result<Json<Vec<Leaderboard>>, Status> {
     let collection: Collection<ConnectGame> = db.database("mongodb_main").collection("games");
 
     let filter = doc! {"game_type": game_type};
@@ -167,7 +168,6 @@ async fn fetch_leaderboard(db: Connection<Db>, game_type: &str) -> Result<Json<V
     Ok(Json(leaderboard))
 }
 
-
 #[options("/<_..>")]
 async fn options() -> Result<(), Status> {
     Ok(())
@@ -198,15 +198,16 @@ impl Fairing for CORS {
     }
 }
 
-
-
 #[launch]
 fn rocket() -> _ {
     rocket::build()
         .attach(Db::init())
         .mount("/games", routes![create_game, all_games])
         .mount("/users", routes![login, register])
-        .mount("/leaderboard", routes![connect4_leaderboard, toototto_leaderboard])
+        .mount(
+            "/leaderboard",
+            routes![connect4_leaderboard, toototto_leaderboard],
+        )
         .mount("/", routes![options])
         .attach(CORS)
 }
