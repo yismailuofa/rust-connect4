@@ -17,3 +17,5 @@ serde = { version = "1.0", features = ["derive"] }
 wasm-bindgen-futures = "0.4"
 gloo-console = "0.2.3"
 js-sys = "0.3"
+web-sys = "0.3.61"
+gloo-dialogs = "0.1.1"

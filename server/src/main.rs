@@ -2,7 +2,13 @@ use std::collections::HashMap;
 
 use argon2::{hash_encoded, verify_encoded};
 use client::{ConnectGame, Leaderboard, User};
-use rocket::{futures::TryStreamExt, http::Status, serde::json::Json};
+use rocket::{
+    fairing::{Fairing, Info, Kind},
+    futures::TryStreamExt,
+    http::{Header, Status},
+    serde::json::Json,
+    Request, Response,
+};
 use rocket_db_pools::{
     mongodb::{self, bson::doc, Collection},
     Connection, Database,
@@ -44,7 +50,7 @@ async fn all_games(db: Connection<Db>) -> Result<Json<Vec<ConnectGame>>, Status>
     Ok(Json(games))
 }
 
-#[get("/login", data = "<user_payload>")]
+#[post("/login", data = "<user_payload>")]
 async fn login(db: Connection<Db>, user_payload: Json<User>) -> Result<(), Status> {
     let collection: Collection<User> = db.database("mongodb_main").collection("users");
 
@@ -99,13 +105,24 @@ async fn register(db: Connection<Db>, user_payload: Json<User>) -> Result<(), St
     }
 }
 
-#[get("/")]
-async fn leaderboard(db: Connection<Db>) -> Result<Json<Vec<Leaderboard>>, Status> {
+#[get("/connect4")]
+async fn connect4_leaderboard(db: Connection<Db>) -> Result<Json<Vec<Leaderboard>>, Status> {
     // Returns the top users grouped by their games
+    return fetch_leaderboard(db, "Connect4").await;
+}
+
+#[get("/tootandotto")]
+async fn toototto_leaderboard(db: Connection<Db>) -> Result<Json<Vec<Leaderboard>>, Status> {
+
+    return fetch_leaderboard(db, "TootAndOtto").await;
+}
+
+async fn fetch_leaderboard(db: Connection<Db>, game_type: &str) -> Result<Json<Vec<Leaderboard>>, Status> {
     let collection: Collection<ConnectGame> = db.database("mongodb_main").collection("games");
 
+    let filter = doc! {"game_type": game_type};
     let mut cursor = collection
-        .find(None, None)
+        .find(filter, None)
         .await
         .map_err(|_| Status::InternalServerError)?;
 
@@ -146,9 +163,42 @@ async fn leaderboard(db: Connection<Db>) -> Result<Json<Vec<Leaderboard>>, Statu
     let mut leaderboard: Vec<Leaderboard> = leaderboard.into_iter().map(|(_, v)| v).collect();
 
     leaderboard.sort_by(|a, b| b.wins.cmp(&a.wins));
-    
+
     Ok(Json(leaderboard))
 }
+
+
+#[options("/<_..>")]
+async fn options() -> Result<(), Status> {
+    Ok(())
+}
+
+pub struct CORS;
+
+#[rocket::async_trait]
+impl Fairing for CORS {
+    fn info(&self) -> Info {
+        Info {
+            name: "Add CORS headers to responses",
+            kind: Kind::Response,
+        }
+    }
+
+    async fn on_response<'r>(&self, _request: &'r Request<'_>, response: &mut Response<'r>) {
+        response.set_header(Header::new(
+            "Access-Control-Allow-Origin",
+            "http://127.0.0.1:8080",
+        ));
+        response.set_header(Header::new(
+            "Access-Control-Allow-Methods",
+            "POST, GET, OPTIONS",
+        ));
+        response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
+        response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
+    }
+}
+
+
 
 #[launch]
 fn rocket() -> _ {
@@ -156,5 +206,7 @@ fn rocket() -> _ {
         .attach(Db::init())
         .mount("/games", routes![create_game, all_games])
         .mount("/users", routes![login, register])
-        .mount("/leaderboard", routes![leaderboard])
+        .mount("/leaderboard", routes![connect4_leaderboard, toototto_leaderboard])
+        .mount("/", routes![options])
+        .attach(CORS)
 }
