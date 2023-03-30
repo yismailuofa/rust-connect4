@@ -44,11 +44,11 @@ fn App() -> Html {
     html! {
         <BrowserRouter>
             {
-                if let Some(_) = &*username {
+                if let Some(username) = &*username {
                     html! {
                         <>
                             <Navbar/>
-                            <Switch<MainRoute> render={switch_main(update_username)} />
+                            <Switch<MainRoute> render={switch_main(username, update_username)} />
                         </>
                     }
                 } else {
@@ -63,17 +63,21 @@ fn App() -> Html {
     }
 }
 
-fn switch_main(set_user: Callback<Option<String>>) -> impl Fn(MainRoute) -> Html {
+fn switch_main(
+    username: &String,
+    set_user: Callback<Option<String>>,
+) -> impl Fn(MainRoute) -> Html {
+    let username = username.clone();
     move |routes: MainRoute| match routes {
         MainRoute::Connect4 => {
             html! { <div class="game-container">
-                <Connect4 />
+                <Connect4 username={username.to_string()}/>
                 </div>
             }
         }
         MainRoute::TootOtto => {
             html! { <div class="game-container">
-                    <TootOtto />
+                    <TootOtto username={username.to_string()}/>
                 </div>
             }
         }
