@@ -1,7 +1,10 @@
-use client::GameType;
+use client::{ConnectGame, GameType};
 
+use chrono::{Datelike, Utc};
+use gloo_net::http::Request;
 use gloo_timers::callback::Timeout;
 use js_sys::Math;
+
 use log::info;
 use yew::prelude::*;
 
@@ -436,6 +439,38 @@ impl Component for Game {
                 link.send_message(msg);
             })
             .forget();
+        }
+
+        if self.winners.0 ^ self.winners.1 {
+            let date = Utc::now();
+
+            let formatted_date = format!("{}-{}-{}", date.year(), date.month(), date.day(),);
+
+            let connect_game = ConnectGame {
+                player1: self.player1.clone(),
+                player2: self.player2.clone(),
+                game_type: self.game_type.clone(),
+                winner: if self.winners.0 {
+                    self.player1.clone()
+                } else {
+                    self.player2.clone()
+                },
+                date: formatted_date,
+            };
+            wasm_bindgen_futures::spawn_local(async move {
+                let response = Request::post("http://127.0.0.1:8000/games/create")
+                    .json(&connect_game)
+                    .unwrap()
+                    .send()
+                    .await
+                    .unwrap();
+
+                let status = response.status();
+
+                if status != 200 {
+                    log::error!("Error saving game: {}", status);
+                }
+            });
         }
     }
 }
