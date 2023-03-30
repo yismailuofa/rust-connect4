@@ -54,6 +54,7 @@ fn App() -> Html {
                 } else {
                     html! {
                         <>
+                            <Redirect<LoginRoute> to={LoginRoute::Login}/>
                             <Switch<LoginRoute> render={switch_login(update_username)} />
                         </>
                     }
