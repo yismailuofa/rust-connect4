@@ -11,7 +11,7 @@ use yew::prelude::*;
 pub struct Game {
     board: Vec<Vec<char>>,
     player1: String,
-    player2: String,
+    player2: usize,
     game_type: GameType,
     num_rows: i32,
     num_cols: i32,
@@ -27,12 +27,13 @@ pub enum Msg {
     Reset,
     RenderAgain,
     ChangeSel,
+    ChangeCpu { cpu: usize },
 }
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
     pub player1: String,
-    pub player2: String,
+    //pub player2: String,
     pub game_type: GameType,
     #[prop_or(7)]
     pub num_rows: i32,
@@ -253,7 +254,7 @@ impl Component for Game {
             ],
             user_turn: true,
             player1: props.player1.clone(),
-            player2: props.player2.clone(),
+            player2: 0,
             game_type: props.game_type.clone(),
             num_rows: props.num_rows,
             num_cols: props.num_cols,
@@ -271,7 +272,7 @@ impl Component for Game {
                     self.num_rows.try_into().unwrap()
                 ];
                 self.winners = (false, false);
-
+                self.player2 = 0;
                 true
             }
             Msg::UserMove { col, choice } => {
@@ -302,6 +303,10 @@ impl Component for Game {
                 info!("T selected: {}", self.t_selected);
                 true
             }
+            Msg::ChangeCpu { cpu } => {
+                self.player2 = cpu;
+                true
+            }
         }
     }
 
@@ -312,7 +317,8 @@ impl Component for Game {
         let disabled = self.winners.0
             || self.winners.1
             || !self.user_turn
-            || ((self.game_type == GameType::TootAndOtto) && (self.user_otto_toot == "None"));
+            || ((self.game_type == GameType::TootAndOtto) && (self.user_otto_toot == "None"))
+            || self.player2 == 0;
 
         let choice = match self.game_type {
             GameType::Connect4 => 'R',
@@ -351,7 +357,14 @@ impl Component for Game {
         }
         let subtitle = if self.winners.0 || self.winners.1 {
             if self.winners.1 {
-                format!("{} wins!", self.player2)
+                
+                let cpu_name = match self.player2 {
+                    1 => "CPU - Easy",
+                    2 => "CPU - Medium",
+                    3 => "CPU - Hard",
+                    _ => panic!("Invalid CPU"),
+                };
+                format!("{} wins!", cpu_name)
             } else {
                 format!("{} wins!", self.player1)
             }
@@ -359,7 +372,13 @@ impl Component for Game {
             if self.user_turn {
                 format!("{}'s turn", self.player1)
             } else {
-                format!("{}'s turn", self.player2)
+                let cpu_name = match self.player2 {
+                    1 => "CPU - Easy",
+                    2 => "CPU - Medium",
+                    3 => "CPU - Hard",
+                    _ => panic!("Invalid CPU"),
+                };
+                format!("{}'s turn", cpu_name)
             }
         };
 
@@ -373,6 +392,24 @@ impl Component for Game {
         if disabled {
             board_classses.push("disabled-board");
         }
+
+        // if cpu is not selected, show popup
+        let select_cpu = if self.player2 == 0 {
+            html! {
+                            <div id="popup1" class="overlay">
+                <div class="popup">
+                    <h2 style="text-align: center;">{"Select CPU Difficulty"}</h2>
+                    <div style="display: flex; flex-direction: row; justify-content: center;">
+                            <button onclick={ctx.link().callback(|_| Msg::ChangeCpu { cpu: 1 })} class="button_cpu_select" style="" >{"Easy"}</button>
+                            <button onclick={ctx.link().callback(|_| Msg::ChangeCpu { cpu: 2 })} class="button_cpu_select" style="font-size: small;">{"Medium"}</button>
+                            <button onclick={ctx.link().callback(|_| Msg::ChangeCpu { cpu: 3 })} class="button_cpu_select" style="font-size: small;">{"Hard"}</button>
+                    </div>
+                </div>
+            </div>
+                        }
+        } else {
+            html! {}
+        };
 
         let toototto = match self.game_type {
             GameType::Connect4 => html! {},
@@ -408,9 +445,9 @@ impl Component for Game {
 
         html! {
             <div class="game-container">
+            { select_cpu}
             <h1 class="title">{ title }</h1>
             { toototto}
-
             <h2 class="subtitle">{ subtitle }</h2>
             <div class={classes!(board_classses)}>{ board }</div>
             <button class="restart" onclick={link.callback(|_| Msg::Reset)}>{"Restart"}</button>
@@ -430,7 +467,7 @@ impl Component for Game {
         }
 
         if !self.user_turn && !self.winners.0 && !self.winners.1 {
-            let (_, col, choice) = self.alpha_beta_minmax(false, 5, i32::MIN, i32::MAX);
+            let (_, col, choice) = self.alpha_beta_minmax(false, (self.player2 as i32)*2, i32::MIN, i32::MAX);
 
             let msg = Msg::ComputerMove { col, choice };
 
@@ -445,15 +482,22 @@ impl Component for Game {
             let date = Utc::now();
 
             let formatted_date = format!("{}-{}-{}", date.year(), date.month(), date.day(),);
-
+            let cpu_name = match self.player2 {
+                1 => "CPU - Easy",
+                2 => "CPU - Medium",
+                3 => "CPU - Hard",
+                _ => panic!("Invalid CPU"),
+            };
+                
+            
             let connect_game = ConnectGame {
                 player1: self.player1.clone(),
-                player2: self.player2.clone(),
+                player2: cpu_name.to_string(),
                 game_type: self.game_type.clone(),
                 winner: if self.winners.0 {
                     self.player1.clone()
                 } else {
-                    self.player2.clone()
+                    cpu_name.to_string()
                 },
                 date: formatted_date,
             };
@@ -484,13 +528,13 @@ pub struct GameProps {
 pub fn Connect4(props: &GameProps) -> Html {
     let username = props.username.clone();
     html! {
-        <Game player1={username} player2={"AI - Medium".to_string()} game_type={GameType::Connect4} />
+        <Game player1={username} game_type={GameType::Connect4} />
     }
 }
 #[function_component]
 pub fn TootOtto(props: &GameProps) -> Html {
     let username = props.username.clone();
     html! {
-        <Game player1={username} player2={"AI - Medium".to_string()} game_type={GameType::TootAndOtto} />
+        <Game player1={username} game_type={GameType::TootAndOtto} />
     }
 }
