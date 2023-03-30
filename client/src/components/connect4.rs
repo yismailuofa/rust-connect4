@@ -272,6 +272,12 @@ impl Component for Game {
                 true
             }
             Msg::UserMove { col, choice } => {
+                let valid_moves = self.get_valid_moves();
+
+                if !valid_moves.contains(&col) {
+                    return false;
+                }
+
                 self.perform_move(col, choice);
                 self.winners = self.is_win();
 
@@ -434,15 +440,22 @@ impl Component for Game {
     }
 }
 
+#[derive(Properties, PartialEq)]
+pub struct GameProps {
+    pub username: String,
+}
+
 #[function_component]
-pub fn Connect4() -> Html {
+pub fn Connect4(props: &GameProps) -> Html {
+    let username = props.username.clone();
     html! {
-        <Game player1={"Ali".to_string()} player2={"AI - Medium".to_string()} game_type={GameType::Connect4} />
+        <Game player1={username} player2={"AI - Medium".to_string()} game_type={GameType::Connect4} />
     }
 }
 #[function_component]
-pub fn TootOtto() -> Html {
+pub fn TootOtto(props: &GameProps) -> Html {
+    let username = props.username.clone();
     html! {
-        <Game player1={"Rupin".to_string()} player2={"AI - Medium".to_string()} game_type={GameType::TootAndOtto} />
+        <Game player1={username} player2={"AI - Medium".to_string()} game_type={GameType::TootAndOtto} />
     }
 }
