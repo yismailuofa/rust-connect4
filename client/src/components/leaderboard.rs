@@ -58,8 +58,8 @@ pub fn LeaderBoard() -> Html {
         );
     }
 
-    let to_user_col: Vec<Leaderboard> = to_users.iter().map(|user| user.clone()).filter(|user| !user.username.starts_with("AI")).collect();
-    let c4_user_col: Vec<Leaderboard> = c4_users.iter().map(|user| user.clone()).filter(|user| !user.username.starts_with("AI")).collect();
+    let to_user_col: Vec<Leaderboard> = to_users.iter().map(|user| user.clone()).filter(|user| !user.username.contains("CPU")).collect();
+    let c4_user_col: Vec<Leaderboard> = c4_users.iter().map(|user| user.clone()).filter(|user| !user.username.contains("CPU")).collect();
 
     html! {
         <>
