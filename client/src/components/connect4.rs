@@ -368,7 +368,7 @@ impl Component for Game {
             } else {
                 format!("{} wins!", self.player1)
             }
-        } else {
+        } else if self.player2!=0{ //check to make sure cpu is selected
             if self.user_turn {
                 format!("{}'s turn", self.player1)
             } else {
@@ -380,6 +380,9 @@ impl Component for Game {
                 };
                 format!("{}'s turn", cpu_name)
             }
+        }
+        else{
+            format!("Select CPU Difficulty")
         };
 
         let title = match self.game_type {
