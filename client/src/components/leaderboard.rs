@@ -58,67 +58,137 @@ pub fn LeaderBoard() -> Html {
         );
     }
 
-    let to_user_col: Vec<Leaderboard> = to_users.iter().map(|user| user.clone()).collect();
-    let c4_user_col: Vec<Leaderboard> = c4_users.iter().map(|user| user.clone()).collect();
+    let to_user_col: Vec<Leaderboard> = to_users.iter().map(|user| user.clone()).filter(|user| !user.username.starts_with("AI")).collect();
+    let c4_user_col: Vec<Leaderboard> = c4_users.iter().map(|user| user.clone()).filter(|user| !user.username.starts_with("AI")).collect();
 
     html! {
         <>
             <h1>{"Leaderboard"}</h1>
-            <p>{"Toot & Otto"}</p>
-            <div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>{"Rank"}</th>
-                            <th>{"Username"}</th>
-                            <th>{"Wins"}</th>
-                            <th>{"Losses"}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {
-                            for to_user_col.iter().enumerate().map(|(i, user)| {
-                                html! {
-                                    <tr>
-                                        <td>{i+1}</td>
-                                        <td>{&user.username}</td>
-                                        <td>{&user.wins}</td>
-                                        <td>{&user.losses}</td>
-                                    </tr>
-                                }
-                            })
-                        }
-                    </tbody>
-                </table>
+            <div class = "leaderboard">
+                <div>
+                    <h2>{"Toot & Otto"}</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>{"Rank"}</th>
+                                <th>{"Username"}</th>
+                                <th>{"Wins"}</th>
+                                <th>{"Losses"}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {
+                                for to_user_col.iter().enumerate().map(|(i, user)| {
+                                    html! {
+                                        <tr>
+                                            {
+                                                if i == 0 {
+                                                    html! {
+                                                        <td>{"🥇"}</td>
+                                                    }
+                                                } else if i == 1 {
+                                                    html! {
+                                                        <td>{"🥈"}</td>
+                                                    }
+                                                } else if i == 2 {
+                                                    html! {
+                                                        <td>{"🥉"}</td>
+                                                    }
+                                                } else {
+                                                    html! {
+                                                        <td>{i+1}</td>
+                                                    }
+                                                }
+                                            }
+                                            {
+                                                if i == 0 {
+                                                    html! {
+                                                        <>
+                                                        <td id="first">{&user.username}</td>
+                                                        <td id="first">{&user.wins}</td>
+                                                        <td id="first">{&user.losses}</td>
+                                                        </>
+                                                    }
+                                                } else {
+                                                    html! {
+                                                        <>
+                                                        <td>{&user.username}</td>
+                                                        <td>{&user.wins}</td>
+                                                        <td>{&user.losses}</td>
+                                                        </>
+                                                    }
+                                                }
+                                            } 
+                                        </tr>
+                                    }
+                                })
+                            }
+                        </tbody>
+                    </table>
 
-            </div>
-            <p>{"Connect 4"}</p>
-            <div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>{"Rank"}</th>
-                            <th>{"Username"}</th>
-                            <th>{"Wins"}</th>
-                            <th>{"Losses"}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {
-                            for c4_user_col.iter().enumerate().map(|(i, user)| {
-                                html! {
-                                    <tr>
-                                        <td>{i+1}</td>
-                                        <td>{&user.username}</td>
-                                        <td>{&user.wins}</td>
-                                        <td>{&user.losses}</td>
-                                    </tr>
-                                }
-                            })
-                        }
-                    </tbody>
-                </table>
+                </div>
+                <div>
+                    <h2>{"Connect 4"}</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>{"Rank"}</th>
+                                <th>{"Username"}</th>
+                                <th>{"Wins"}</th>
+                                <th>{"Losses"}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {
+                                for c4_user_col.iter().enumerate().map(|(i, user)| {
+                                    html! {
+                                        <tr>
+                                            {
+                                                if i == 0 {
+                                                    html! {
+                                                        <td>{"🥇"}</td>
+                                                    }
+                                                } else if i == 1 {
+                                                    html! {
+                                                        <td>{"🥈"}</td>
+                                                    }
+                                                } else if i == 2 {
+                                                    html! {
+                                                        <td>{"🥉"}</td>
+                                                    }
+                                                } else {
+                                                    html! {
+                                                        <td>{i+1}</td>
+                                                    }
+                                                }
+                                            }
+                                            {
+                                                if i == 0 {
+                                                    html! {
+                                                        <>
+                                                        <td id="first">{&user.username}</td>
+                                                        <td id="first">{&user.wins}</td>
+                                                        <td id="first">{&user.losses}</td>
+                                                        </>
+                                                    }
+                                                } else {
+                                                    html! {
+                                                        <>
+                                                        <td>{&user.username}</td>
+                                                        <td>{&user.wins}</td>
+                                                        <td>{&user.losses}</td>
+                                                        </>
+                                                    }
+                                                }
+                                            } 
+                                        </tr>
+                                    }
+                                })
+                            }
+                        </tbody>
+                    </table>
 
+                </div>
             </div>
         </>
     }

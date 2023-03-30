@@ -162,8 +162,13 @@ async fn fetch_leaderboard(
     }
 
     let mut leaderboard: Vec<Leaderboard> = leaderboard.into_iter().map(|(_, v)| v).collect();
+    
+    leaderboard.sort_by(| a, b | if a.wins == b.wins {
+        a.losses.partial_cmp(&b.losses).unwrap()
+      } else {
+        b.wins.partial_cmp(&a.wins).unwrap()
+      });
 
-    leaderboard.sort_by(|a, b| b.wins.cmp(&a.wins));
 
     Ok(Json(leaderboard))
 }
