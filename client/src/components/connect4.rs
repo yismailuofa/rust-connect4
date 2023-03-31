@@ -4,7 +4,7 @@ use chrono::{Datelike, Utc};
 use gloo_net::http::Request;
 use gloo_timers::callback::Timeout;
 
-use rand::{prelude::SliceRandom, seq::IteratorRandom};
+use rand::prelude::SliceRandom;
 
 use log::info;
 use yew::prelude::*;
@@ -82,9 +82,17 @@ impl Game {
         };
         let mut best_move = 0;
         let mut best_choice = '_';
-        for m in self.get_valid_moves() {
-            for c in options.chars() {
-                self.perform_move(m, c);
+        let rng = &mut rand::thread_rng();
+
+        let mut moves = self.get_valid_moves();
+        moves.shuffle(rng);
+
+        let mut options = options.chars().collect::<Vec<char>>();
+        options.shuffle(rng);
+
+        for m in moves {
+            for c in &options {
+                self.perform_move(m, *c);
 
                 let (score, _, _) = self.alpha_beta_minmax(!player, depth - 1, alpha, beta);
 
@@ -92,7 +100,7 @@ impl Game {
                     if score > best_score {
                         best_score = score;
                         best_move = m;
-                        best_choice = c;
+                        best_choice = *c;
                     }
 
                     if beta <= best_score {
@@ -104,7 +112,7 @@ impl Game {
                     if score < best_score {
                         best_score = score;
                         best_move = m;
-                        best_choice = c;
+                        best_choice = *c;
                     }
                     if alpha >= best_score {
                         self.undo_move(m);
@@ -114,15 +122,6 @@ impl Game {
                 }
                 self.undo_move(m);
             }
-        }
-        // If we have a best_score of 0 (tie), we want to return a random move
-        if best_score == 0 {
-            let mut rng = rand::thread_rng();
-
-            let moves = self.get_valid_moves();
-            best_move = moves.choose(&mut rng).unwrap().clone();
-
-            best_choice = options.chars().choose(&mut rng).unwrap();
         }
 
         (best_score, best_move, best_choice)
