@@ -52,13 +52,6 @@ impl Game {
     ) -> (i32, usize, char) {
         let max_player = true; //true is user move (R in connect4)
 
-        // let next_player = match player {
-        //     'R' => 'B',
-        //     'B' => 'R',
-        //     'T' => 'O',
-        //     'O' => 'T',
-        //     _ => panic!("Invalid player!"),
-        // };
         let options = match self.game_type {
             GameType::Connect4 => {
                 if player {
@@ -211,9 +204,6 @@ impl Game {
             }
             _ => return (res[0], res[1]),
         }
-
-        // }
-        // (res[0], res[1])
     }
 }
 

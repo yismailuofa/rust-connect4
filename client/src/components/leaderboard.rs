@@ -2,12 +2,6 @@ use client::Leaderboard;
 use gloo_net::http::Request;
 use yew::prelude::*;
 
-// #[derive(Clone, PartialEq, Properties)]
-// pub struct Props {
-//     // pub onsubmit: Callback<()>,
-
-// }
-
 #[function_component]
 pub fn LeaderBoard() -> Html {
     let to_users = use_state(|| vec![]);
@@ -58,8 +52,16 @@ pub fn LeaderBoard() -> Html {
         );
     }
 
-    let to_user_col: Vec<Leaderboard> = to_users.iter().map(|user| user.clone()).filter(|user| !user.username.contains("CPU") && !user.username.contains("AI")).collect();
-    let c4_user_col: Vec<Leaderboard> = c4_users.iter().map(|user| user.clone()).filter(|user| !user.username.contains("CPU") && !user.username.contains("AI")).collect();
+    let to_user_col: Vec<Leaderboard> = to_users
+        .iter()
+        .map(|user| user.clone())
+        .filter(|user| !user.username.contains("CPU") && !user.username.contains("AI"))
+        .collect();
+    let c4_user_col: Vec<Leaderboard> = c4_users
+        .iter()
+        .map(|user| user.clone())
+        .filter(|user| !user.username.contains("CPU") && !user.username.contains("AI"))
+        .collect();
 
     html! {
         <>
@@ -118,7 +120,7 @@ pub fn LeaderBoard() -> Html {
                                                         </>
                                                     }
                                                 }
-                                            } 
+                                            }
                                         </tr>
                                     }
                                 })
@@ -180,7 +182,7 @@ pub fn LeaderBoard() -> Html {
                                                         </>
                                                     }
                                                 }
-                                            } 
+                                            }
                                         </tr>
                                     }
                                 })
