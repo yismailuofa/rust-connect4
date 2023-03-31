@@ -318,7 +318,8 @@ impl Component for Game {
             || self.winners.1
             || !self.user_turn
             || ((self.game_type == GameType::TootAndOtto) && (self.user_otto_toot == "None"))
-            || self.player2 == 0;
+            || self.player2 == 0
+            || self.is_draw();
 
         let choice = match self.game_type {
             GameType::Connect4 => 'R',
@@ -380,6 +381,8 @@ impl Component for Game {
                 };
                 format!("{}'s turn", cpu_name)
             }
+        } else if self.is_draw() {
+            format!("Draw!")
         } else {
             format!("Select CPU Difficulty")
         };
