@@ -3,7 +3,8 @@ use client::{ConnectGame, GameType};
 use chrono::{Datelike, Utc};
 use gloo_net::http::Request;
 use gloo_timers::callback::Timeout;
-use js_sys::Math;
+
+use rand::{prelude::SliceRandom, seq::IteratorRandom};
 
 use log::info;
 use yew::prelude::*;
@@ -121,7 +122,17 @@ impl Game {
                 self.undo_move(m);
             }
         }
-        return (best_score, best_move, best_choice);
+        // If we have a best_score of 0 (tie), we want to return a random move
+        if best_score == 0 {
+            let mut rng = rand::thread_rng();
+
+            let moves = self.get_valid_moves();
+            best_move = moves.choose(&mut rng).unwrap().clone();
+
+            best_choice = options.chars().choose(&mut rng).unwrap();
+        }
+
+        (best_score, best_move, best_choice)
     }
 
     fn is_draw(&self) -> bool {
@@ -357,7 +368,6 @@ impl Component for Game {
         }
         let subtitle = if self.winners.0 || self.winners.1 {
             if self.winners.1 {
-                
                 let cpu_name = match self.player2 {
                     1 => "CPU - Easy",
                     2 => "CPU - Medium",
@@ -368,7 +378,8 @@ impl Component for Game {
             } else {
                 format!("{} wins!", self.player1)
             }
-        } else if self.player2!=0{ //check to make sure cpu is selected
+        } else if self.player2 != 0 {
+            //check to make sure cpu is selected
             if self.user_turn {
                 format!("{}'s turn", self.player1)
             } else {
@@ -380,8 +391,7 @@ impl Component for Game {
                 };
                 format!("{}'s turn", cpu_name)
             }
-        }
-        else{
+        } else {
             format!("Select CPU Difficulty")
         };
 
@@ -461,7 +471,8 @@ impl Component for Game {
     fn rendered(&mut self, ctx: &Context<Self>, first_render: bool) {
         if first_render && self.game_type == GameType::TootAndOtto {
             let options = vec!["TOOT", "OTTO"];
-            self.user_otto_toot = options[if Math::random() < 0.5 { 0 } else { 1 }].to_string();
+            self.user_otto_toot =
+                options[if rand::random::<f64>() < 0.5 { 0 } else { 1 }].to_string();
             let link = ctx.link().clone();
             Timeout::new(3000, move || {
                 link.send_message(Msg::RenderAgain);
@@ -470,7 +481,8 @@ impl Component for Game {
         }
 
         if !self.user_turn && !self.winners.0 && !self.winners.1 {
-            let (_, col, choice) = self.alpha_beta_minmax(false, (self.player2 as i32)*2, i32::MIN, i32::MAX);
+            let (_, col, choice) =
+                self.alpha_beta_minmax(false, (self.player2 as i32) * 2, i32::MIN, i32::MAX);
 
             let msg = Msg::ComputerMove { col, choice };
 
@@ -491,8 +503,7 @@ impl Component for Game {
                 3 => "CPU - Hard",
                 _ => panic!("Invalid CPU"),
             };
-                
-            
+
             let connect_game = ConnectGame {
                 player1: self.player1.clone(),
                 player2: cpu_name.to_string(),
