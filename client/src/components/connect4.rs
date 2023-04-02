@@ -1,6 +1,7 @@
 use client::{ConnectGame, GameType};
 
 use chrono::{Datelike, Utc};
+use gloo_dialogs::alert;
 use gloo_net::http::Request;
 use gloo_timers::callback::Timeout;
 
@@ -20,6 +21,7 @@ pub struct Game {
     winners: (bool, bool),
     user_otto_toot: String,
     t_selected: bool,
+    game_started: bool,
 }
 
 pub enum Msg {
@@ -29,6 +31,8 @@ pub enum Msg {
     RenderAgain,
     ChangeSel,
     ChangeCpu { cpu: usize },
+    ChangeDim { rows: i32, cols: i32 },
+    StartGame,
 }
 
 #[derive(Properties, PartialEq)]
@@ -261,6 +265,7 @@ impl Component for Game {
             winners: (false, false),
             user_otto_toot: "None".to_string(),
             t_selected: false,
+            game_started: false,
         }
     }
 
@@ -273,6 +278,7 @@ impl Component for Game {
                 ];
                 self.winners = (false, false);
                 self.player2 = 0;
+                self.game_started = false;
                 true
             }
             Msg::UserMove { col, choice } => {
@@ -307,6 +313,30 @@ impl Component for Game {
                 self.player2 = cpu;
                 true
             }
+            Msg::ChangeDim { rows, cols } => {
+                
+                self.num_rows += rows;
+                self.num_cols += cols;
+                if self.num_rows < 4 {
+                    self.num_rows = 4;
+                }
+                if self.num_cols < 4 {
+                    self.num_cols = 4;
+                }
+                self.board = vec![
+                    vec!['_'; self.num_cols.try_into().unwrap()];
+                    self.num_rows.try_into().unwrap()
+                ];
+                true
+            }
+            Msg::StartGame => {
+                if self.player2 != 0 {
+                    self.game_started = true;
+                } else {
+                    alert("Select a CPU to play against!")
+                }
+                true
+            }
         }
     }
 
@@ -318,7 +348,7 @@ impl Component for Game {
             || self.winners.1
             || !self.user_turn
             || ((self.game_type == GameType::TootAndOtto) && (self.user_otto_toot == "None"))
-            || self.player2 == 0
+            || !self.game_started
             || self.is_draw();
 
         let choice = match self.game_type {
@@ -357,7 +387,9 @@ impl Component for Game {
             });
         }
         let subtitle = if self.winners.0 || self.winners.1 {
-            if self.winners.1 {
+            if self.winners.1 && self.winners.0 {
+                format!("Draw!")
+            } else if self.winners.1 {
                 let cpu_name = match self.player2 {
                     1 => "CPU - Easy",
                     2 => "CPU - Medium",
@@ -368,7 +400,9 @@ impl Component for Game {
             } else {
                 format!("{} wins!", self.player1)
             }
-        } else if self.player2 != 0 {
+        } else if self.is_draw() {
+            format!("Draw!")
+        } else if self.game_started {
             //check to make sure cpu is selected
             if self.user_turn {
                 format!("{}'s turn", self.player1)
@@ -381,8 +415,6 @@ impl Component for Game {
                 };
                 format!("{}'s turn", cpu_name)
             }
-        } else if self.is_draw() {
-            format!("Draw!")
         } else {
             format!("Select CPU Difficulty")
         };
@@ -399,15 +431,28 @@ impl Component for Game {
         }
 
         // if cpu is not selected, show popup
-        let select_cpu = if self.player2 == 0 {
+        let select_cpu = if !self.game_started {
             html! {
-                            <div id="popup1" class="overlay">
+            <div id="popup1" class="overlay">
                 <div class="popup">
                     <h2 style="text-align: center;">{"Select CPU Difficulty"}</h2>
                     <div style="display: flex; flex-direction: row; justify-content: center;">
-                            <button onclick={ctx.link().callback(|_| Msg::ChangeCpu { cpu: 1 })} class="button_cpu_select" style="" >{"Easy"}</button>
-                            <button onclick={ctx.link().callback(|_| Msg::ChangeCpu { cpu: 2 })} class="button_cpu_select" style="font-size: small;">{"Medium"}</button>
-                            <button onclick={ctx.link().callback(|_| Msg::ChangeCpu { cpu: 3 })} class="button_cpu_select" style="font-size: small;">{"Hard"}</button>
+                            <button onclick={ctx.link().callback(|_| Msg::ChangeCpu { cpu: 1 })} disabled={self.player2==1} class="button_cpu_select" style="" >{"Easy"}</button>
+                            <button onclick={ctx.link().callback(|_| Msg::ChangeCpu { cpu: 2 })} disabled={self.player2==2} class="button_cpu_select" style="font-size: small;">{"Medium"}</button>
+                            <button onclick={ctx.link().callback(|_| Msg::ChangeCpu { cpu: 3 })} disabled={self.player2==3} class="button_cpu_select" style="font-size: small;">{"Hard"}</button>
+                    </div>
+                    <div style="display: flex; flex-direction: row; justify-content: center;">
+                        <button onclick={ctx.link().callback(|_| Msg::ChangeDim { rows: 0, cols: -1 })} class="button_cpu_select" style="width: 30px; height: 30px" >{"-"}</button>
+                        <h2 style="text-align: center; padding-top: 5px;">{format!("{} columns", self.num_cols)}</h2>
+                        <button onclick={ctx.link().callback(|_| Msg::ChangeDim { rows: 0, cols: 1 })} class="button_cpu_select" style="width: 30px; height: 30px">{"+"}</button>
+                    </div>
+                    <div style="display: flex; flex-direction: row; justify-content: center;">
+                    <button onclick={ctx.link().callback(|_| Msg::ChangeDim { rows: -1, cols: 0 })} class="button_cpu_select" style="width: 30px; height: 30px" >{"-"}</button>
+                    <h2 style="text-align: center; padding-top: 5px;">{format!("{} rows", self.num_rows)}</h2>
+                    <button onclick={ctx.link().callback(|_| Msg::ChangeDim { rows: 1, cols: 0 })} class="button_cpu_select" style="width: 30px; height: 30px">{"+"}</button>
+                    </div>
+                    <div style="display: flex; flex-direction: row; justify-content: center;">
+                        <button onclick={ctx.link().callback(|_| Msg::StartGame)} class="button_cpu_select" style="width: 100px; height: 30px; margin-top: 10px; border-radius: 20%;">{"Start"}</button>
                     </div>
                 </div>
             </div>
