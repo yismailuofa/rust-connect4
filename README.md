@@ -16,6 +16,10 @@ rustup target add wasm32-unknown-unknown
 
 ## Running the Server
 
+```
+mongod --port 27017
+```
+
 ```bash
 cargo run
 ```
@@ -24,4 +28,14 @@ cargo run
 
 ```bash
 trunk serve --open
+```
+
+## Debugging
+
+```
+mongod --port 27017
+```
+
+```bash
+cargo run -- cli
 ```

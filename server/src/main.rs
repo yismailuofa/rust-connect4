@@ -1,7 +1,9 @@
+use chrono::{Datelike, Utc};
 use std::collections::HashMap;
 
 use argon2::{hash_encoded, verify_encoded};
-use client::{ConnectGame, Leaderboard, User};
+use client::{ConnectGame, GameType, Leaderboard, User};
+use mongodb::Client;
 use rocket::{
     fairing::{Fairing, Info, Kind},
     futures::TryStreamExt,
@@ -162,13 +164,14 @@ async fn fetch_leaderboard(
     }
 
     let mut leaderboard: Vec<Leaderboard> = leaderboard.into_iter().map(|(_, v)| v).collect();
-    
-    leaderboard.sort_by(| a, b | if a.wins == b.wins {
-        a.losses.partial_cmp(&b.losses).unwrap()
-      } else {
-        b.wins.partial_cmp(&a.wins).unwrap()
-      });
 
+    leaderboard.sort_by(|a, b| {
+        if a.wins == b.wins {
+            a.losses.partial_cmp(&b.losses).unwrap()
+        } else {
+            b.wins.partial_cmp(&a.wins).unwrap()
+        }
+    });
 
     Ok(Json(leaderboard))
 }
@@ -203,16 +206,219 @@ impl Fairing for CORS {
     }
 }
 
-#[launch]
-fn rocket() -> _ {
-    rocket::build()
-        .attach(Db::init())
-        .mount("/games", routes![create_game, all_games])
-        .mount("/users", routes![login, register])
-        .mount(
-            "/leaderboard",
-            routes![connect4_leaderboard, toototto_leaderboard],
-        )
-        .mount("/", routes![options])
-        .attach(CORS)
+#[rocket::main]
+async fn main() {
+    let args = std::env::args().collect::<Vec<String>>();
+
+    if args.len() == 2 && args[1] == "cli" {
+        println!("Server Debugging CLI, make sure you have the server running in another terminal");
+
+        let client: Client = Client::with_uri_str("mongodb://localhost:27017")
+            .await
+            .expect("Failed to initialize client.");
+
+        let db = client.database("mongodb_main");
+
+        let options = vec![
+            "1. Create a game",
+            "2. Get all games",
+            "3. Login",
+            "4. Register",
+            "5. Exit",
+        ];
+
+        let mut input = String::new();
+
+        loop {
+            println!("Please select an option:");
+
+            for option in &options {
+                println!("{}", option);
+            }
+
+            input.clear();
+
+            std::io::stdin()
+                .read_line(&mut input)
+                .expect("Failed to read line");
+
+            let input: usize = input.trim().parse().unwrap();
+
+            match input {
+                1 => {
+                    let games = db.collection::<ConnectGame>("games");
+
+                    // Prompt for game fields
+                    let mut input = String::new();
+                    input.clear();
+
+                    println!("Please enter the game type: 1. Connect4, 2. TootAndOtto");
+                    std::io::stdin()
+                        .read_line(&mut input)
+                        .expect("Failed to read line");
+
+                    if (input.trim() != "1") && (input.trim() != "2") {
+                        println!("Invalid game type");
+                        continue;
+                    }
+
+                    let game_type: GameType = if input.trim() == "1" {
+                        GameType::Connect4
+                    } else {
+                        GameType::TootAndOtto
+                    };
+
+                    input.clear();
+
+                    println!("Please enter the player 1 username:");
+                    std::io::stdin()
+                        .read_line(&mut input)
+                        .expect("Failed to read line");
+
+                    let player1 = input.trim().to_string();
+
+                    input.clear();
+
+                    println!("Please enter the player 2 username:");
+                    std::io::stdin()
+                        .read_line(&mut input)
+                        .expect("Failed to read line");
+
+                    let player2 = input.trim().to_string();
+
+                    input.clear();
+
+                    println!("Please enter the winner username:");
+                    std::io::stdin()
+                        .read_line(&mut input)
+                        .expect("Failed to read line");
+
+                    let winner = input.trim().to_string();
+
+                    let date = Utc::now();
+
+                    let formatted_date =
+                        format!("{}-{}-{}", date.year(), date.month(), date.day(),);
+
+                    let game = ConnectGame {
+                        game_type,
+                        player1,
+                        player2,
+                        winner,
+                        date: formatted_date,
+                    };
+
+                    games.insert_one(game, None).await.unwrap();
+
+                    println!("Game created");
+                }
+                2 => {
+                    let games = db.collection::<ConnectGame>("games");
+
+                    let mut cursor = games
+                        .find(None, None)
+                        .await
+                        .expect("Failed to execute find.");
+
+                    while let Some(result) = cursor.try_next().await.unwrap() {
+                        println!("{:#?}", result);
+                    }
+                }
+                3 => {
+                    let users = db.collection::<User>("users");
+
+                    let mut input = String::new();
+                    input.clear();
+
+                    println!("Please enter the username:");
+                    std::io::stdin()
+                        .read_line(&mut input)
+                        .expect("Failed to read line");
+
+                    let username = input.trim().to_string();
+
+                    input.clear();
+
+                    println!("Please enter the password:");
+                    std::io::stdin()
+                        .read_line(&mut input)
+                        .expect("Failed to read line");
+
+                    let password = input.trim().to_string();
+
+                    let user = users
+                        .find_one(
+                            doc! {
+                                "username": username,
+                                "password": hash_encoded(
+                                password.as_bytes(),
+                                b"supercalifragilisticexpialidocious",
+                                &argon2::Config::default(),
+                            ).unwrap()
+                            },
+                            None,
+                        )
+                        .await
+                        .unwrap();
+
+                    if let Some(user) = user {
+                        println!("User found: {:#?}", user);
+                    } else {
+                        println!("User not found");
+                    }
+                }
+                4 => {
+                    let users = db.collection::<User>("users");
+
+                    let mut input = String::new();
+                    input.clear();
+
+                    println!("Please enter the username:");
+                    std::io::stdin()
+                        .read_line(&mut input)
+                        .expect("Failed to read line");
+
+                    let username = input.trim().to_string();
+
+                    input.clear();
+
+                    println!("Please enter the password:");
+                    std::io::stdin()
+                        .read_line(&mut input)
+                        .expect("Failed to read line");
+
+                    let password = input.trim().to_string();
+
+                    let user = User {
+                        username,
+                        password: hash_encoded(
+                            password.as_bytes(),
+                            b"supercalifragilisticexpialidocious",
+                            &argon2::Config::default(),
+                        )
+                        .unwrap(),
+                    };
+
+                    users.insert_one(user, None).await.unwrap();
+
+                    println!("User created");
+                }
+                5 => break,
+                _ => println!("Invalid option"),
+            }
+        }
+    } else {
+        let _ = rocket::build()
+            .attach(Db::init())
+            .mount("/games", routes![create_game, all_games])
+            .mount("/users", routes![login, register])
+            .mount(
+                "/leaderboard",
+                routes![connect4_leaderboard, toototto_leaderboard],
+            )
+            .mount("/", routes![options])
+            .attach(CORS)
+            .launch()
+            .await;
+    }
 }
