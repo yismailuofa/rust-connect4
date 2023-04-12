@@ -36,8 +36,7 @@ pub enum LoginRoute {
 
 #[function_component()]
 fn App() -> Html {
-    // let username = use_state(|| Option::<String>::None);
-    let username = use_state(|| Some("rupin".to_string()));
+    let username = use_state(|| Option::<String>::None);
 
     let user_clone = username.clone();
     let update_username = Callback::from(move |new_user: Option<String>| user_clone.set(new_user));
