@@ -70,15 +70,24 @@ pub fn RegisterForm(props: &Props) -> Html {
                     password: password_value.to_string(),
                 };
 
-                let response = Request::post("http://127.0.0.1:8000/users/register")
+                let result = Request::post("http://127.0.0.1:8000/users/register")
                     .json(&user)
                     .unwrap()
                     .send()
-                    .await
-                    .unwrap();
+                    .await;
 
+                let response = match result {
+                    Ok(response) => response,
+                    Err(err) => {
+                        alert(&format!("Error: {}", err));
+                        return;
+                    }
+                };
                 let status = response.status();
-
+                if status == 500 {
+                    alert("Database not available");
+                    return;
+                }
                 if status != 200 {
                     alert("Invalid username or password");
                     return;
