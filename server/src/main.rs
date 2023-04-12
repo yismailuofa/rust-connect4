@@ -198,10 +198,6 @@ impl Fairing for CORS {
             "http://127.0.0.1:8080",
         ));
         response.set_header(Header::new(
-            "Access-Control-Allow-Origin",
-            "http://localhost:8080",
-        ));
-        response.set_header(Header::new(
             "Access-Control-Allow-Methods",
             "POST, GET, OPTIONS",
         ));
